@@ -372,7 +372,7 @@ form.profile.wizard fieldset{min-height:300px;align-content:start}
 .msg.busy{color:var(--muted);font-style:italic}
 form.ask{display:flex;gap:8px}
 form.ask input{flex:1;min-width:0;min-height:48px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;background:var(--surface)}
-#dataBox{margin-top:16px}
+#dataBox,#acctBox{margin-top:16px}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -493,6 +493,7 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
       </div>
       <button class="btn primary block" type="submit" id="pfSubmit">Mettre à jour mon plan</button>
     </form>
+    <div id="acctHost"></div>
     <div class="box" id="dataBox"><h3>Tes données</h3><p class="note">Tout est enregistré sur cet appareil. Fais une sauvegarde de temps en temps : elle te permet de tout retrouver sur un autre téléphone ou après avoir vidé le navigateur.</p>
       <button class="btn block" data-export>Télécharger une sauvegarde</button>
       <label class="btn ghost block filebtn">Restaurer une sauvegarde<input type="file" accept="application/json,.json" id="imp-file"></label></div>
@@ -511,6 +512,7 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
 <button class="fab" data-coach aria-label="Ouvrir le coach"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>Coach</button>
 <div class="restpill" id="restPill" hidden role="timer" aria-live="off"><span>Repos</span><b>0:00</b><button data-sp="restskip">Passer</button></div>
 
+<script src="config.js"></script>
 <script>
 /* ===================== Data =====================
    Nutrients per 100 g as sold (raw / dry / drained), approximated from the Ciqual table (ANSES).
@@ -819,7 +821,7 @@ const DEFAULT_CROUS={price:1,plate:"viande",p1:"laitage",p2:"crudites",days:[[1,
 const DEFAULT={sex:"m",age:22,height:178,weight:72,activity:"1.55",goal:"bulk",meals:"3",budget:40,diet:"omni",noegg:false,nodairy:false,nofish:false,whey:false,gourmand:true,st_lidl:true,st_leclerc:true,crous:DEFAULT_CROUS};
 
 /* ===================== State ===================== */
-const store={get(k,d){try{const v=localStorage.getItem("pp_"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("pp_"+k,JSON.stringify(v))}catch(e){}if(k==="training"||APP_KEYS.includes(k))scheduleCloud(k)}};
+const store={get(k,d){try{const v=localStorage.getItem("pp_"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("pp_"+k,JSON.stringify(v))}catch(e){}if(k==="training"||APP_KEYS.includes(k))scheduleCloud(k);try{sbSchedule()}catch(e){}}};
 let saved=store.get("profile",null);let exampleMode=!saved;
 let profile={...DEFAULT,...(saved||{})};profile.crous={...DEFAULT_CROUS,...(profile.crous||{})};
 let banned=new Set(store.get("banned",[]));
@@ -2385,7 +2387,107 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
   else if("barcode" in t.dataset){const v=(document.getElementById("sc-code")||{}).value||"";runBarcode(v.replace(/\D/g,""),null)}});
 document.addEventListener("change",e=>{if(e.target.id==="bc-file"&&e.target.files[0])runBarcode(null,e.target.files[0]);if(e.target.id==="imp-file"&&e.target.files[0])importData(e.target.files[0])});
 
-applyIngOv();buildCrousFields();fillForm();applyWizard();refresh();renderSport();initCloud();
+/* ===================== Account & cloud sync (Supabase, phone version) =====================
+   Email + password login. All app data is saved as one JSON row per user, protected by row-level
+   security (each account reads and writes only its own row). Plain REST calls, no library. */
+const SB=(window.PP_CONFIG&&window.PP_CONFIG.supabaseUrl&&window.PP_CONFIG.supabaseKey)?{url:window.PP_CONFIG.supabaseUrl.replace(/\/$/,""),key:window.PP_CONFIG.supabaseKey}:null;
+const SYNC_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training"];
+let sbSession=(()=>{try{return JSON.parse(localStorage.getItem("pp_sbsession")||"null")}catch(e){return null}})();
+let sbState={busy:false,err:null,last:(()=>{try{return +localStorage.getItem("pp_sblast")||0}catch(e){return 0}})()};
+let sbTimer=null,sbPushing=false;
+function sbSaveSession(s){sbSession=s;try{s?localStorage.setItem("pp_sbsession",JSON.stringify(s)):localStorage.removeItem("pp_sbsession")}catch(e){}}
+function sbMark(){try{localStorage.setItem("pp_localUpdated",String(Date.now()))}catch(e){}}
+async function sbAuth(path,body){
+  const r=await fetch(SB.url+"/auth/v1/"+path,{method:"POST",headers:{apikey:SB.key,"content-type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(sbErr(d.error_description||d.msg||d.message||("Erreur "+r.status)));
+  return d;
+}
+function sbErr(m){m=String(m);
+  if(/invalid login/i.test(m))return "Email ou mot de passe incorrect.";
+  if(/already registered|already exists/i.test(m))return "Un compte existe déjà avec cet email : connecte-toi.";
+  if(/email not confirmed/i.test(m))return "Confirme d'abord ton email avec le lien reçu, puis reconnecte-toi.";
+  if(/password/i.test(m)&&/6/.test(m))return "Le mot de passe doit faire au moins 6 caractères.";
+  return m}
+function sbStore(d){if(!d.access_token)return false;sbSaveSession({at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000-60000,uid:d.user.id,email:d.user.email});return true}
+async function sbToken(){
+  if(!sbSession)return null;
+  if(Date.now()<sbSession.exp)return sbSession.at;
+  try{const d=await sbAuth("token?grant_type=refresh_token",{refresh_token:sbSession.rt});sbStore(d);return sbSession.at}
+  catch(e){if(navigator.onLine){sbSaveSession(null);renderAccount()}return null}
+}
+async function sbRest(method,query,body,extra){
+  const t=await sbToken();if(!t)throw new Error("Session expirée : reconnecte-toi.");
+  const r=await fetch(SB.url+"/rest/v1/user_data"+query,{method,headers:{apikey:SB.key,Authorization:"Bearer "+t,"content-type":"application/json",...(extra||{})},body:body?JSON.stringify(body):undefined});
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||("Erreur "+r.status))}
+  return method==="GET"?r.json():null;
+}
+function sbCollect(){const data={};SYNC_KEYS.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem("pp_"+k)||"null")}catch(e){}});return data}
+async function sbPush(){
+  if(!SB||!sbSession||sbPushing)return;sbPushing=true;
+  try{const now=new Date().toISOString();await sbRest("POST","",{user_id:sbSession.uid,data:sbCollect(),updated_at:now},{Prefer:"resolution=merge-duplicates,return=minimal"});
+    sbState.last=Date.parse(now);sbState.err=null;try{localStorage.setItem("pp_sblast",String(sbState.last))}catch(e){}}
+  catch(e){sbState.err=navigator.onLine?e.message:"Hors connexion : la synchro reprendra dès que tu auras du réseau."}
+  finally{sbPushing=false;sbChip();renderAccount()}
+}
+function sbSchedule(){if(!SB||!sbSession)return;sbMark();clearTimeout(sbTimer);sbTimer=setTimeout(sbPush,2500)}
+/* On login or start: the newest copy wins (account vs this phone). */
+async function sbPull(first){
+  if(!SB||!sbSession)return;
+  try{
+    const rows=await sbRest("GET",`?select=data,updated_at&user_id=eq.${sbSession.uid}`);
+    const local=+(localStorage.getItem("pp_localUpdated")||0);
+    if(rows.length&&rows[0].data){
+      const remote=Date.parse(rows[0].updated_at);
+      const localHasData=!!localStorage.getItem("pp_profile")||!!localStorage.getItem("pp_training");
+      if(remote>Math.max(local,sbState.last)||(first&&!localHasData)){
+        SYNC_KEYS.forEach(k=>{const v=rows[0].data[k];if(v===null||v===undefined)localStorage.removeItem("pp_"+k);else localStorage.setItem("pp_"+k,JSON.stringify(v))});
+        localStorage.setItem("pp_localUpdated",String(remote));localStorage.setItem("pp_sblast",String(remote));
+        toast("Données de ton compte récupérées.");setTimeout(()=>location.reload(),700);return;
+      }
+    }
+    await sbPush();
+  }catch(e){sbState.err=navigator.onLine?e.message:"Hors connexion.";sbChip();renderAccount()}
+}
+function sbChip(){if(!SB)return;const c=document.getElementById("syncChip");if(!c)return;
+  c.textContent=!sbSession?"Non connecté":sbState.err?"Synchro en attente":"Synchronisé"}
+function accountHtml(){
+  if(inClaude())return "";
+  if(!SB)return `<div class="box" id="acctBox"><h3>Ton compte</h3><p class="note">La synchronisation par compte n'est pas encore configurée sur ce site. En attendant, télécharge une sauvegarde régulièrement.</p></div>`;
+  if(sbSession)return `<div class="box" id="acctBox"><h3>Ton compte</h3>
+    <p>Connecté : <b>${esc(sbSession.email)}</b></p>
+    <p class="note">${sbState.err?esc(sbState.err):sbState.last?`Dernière synchronisation : ${new Date(sbState.last).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}.`:"Synchronisation en cours…"} Tes données sont enregistrées automatiquement dans ton compte à chaque modification.</p>
+    <div class="row"><button class="btn sm" data-sbsync>Synchroniser maintenant</button><button class="btn sm ghost" data-sbout>Se déconnecter</button></div></div>`;
+  return `<div class="box" id="acctBox"><h3>Ton compte</h3>
+    <p class="note">Connecte-toi pour sauvegarder ta progression en ligne et la retrouver sur n'importe quel téléphone.</p>
+    <form id="sbForm" class="profile" style="gap:10px">
+      <label class="f">Email<input id="sb-email" type="email" autocomplete="email" required></label>
+      <label class="f">Mot de passe<input id="sb-pass" type="password" autocomplete="current-password" minlength="6" required></label>
+      ${sbState.err?`<p class="note" style="color:var(--warn)"><b>${esc(sbState.err)}</b></p>`:""}
+      <div class="row"><button class="btn primary" type="submit" data-mode="in" ${sbState.busy?"disabled":""}>Se connecter</button><button class="btn" type="submit" data-mode="up" ${sbState.busy?"disabled":""}>Créer un compte</button></div>
+    </form></div>`;
+}
+function renderAccount(){const host=document.getElementById("acctHost");if(host)host.innerHTML=accountHtml()}
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="sbForm")return;e.preventDefault();
+  const mode=(e.submitter&&e.submitter.dataset.mode)||"in",email=document.getElementById("sb-email").value.trim(),password=document.getElementById("sb-pass").value;
+  sbState.busy=true;sbState.err=null;renderAccount();
+  try{
+    if(mode==="up"){const d=await sbAuth("signup",{email,password});if(!sbStore(d)){sbState.busy=false;sbState.err="Compte créé. Ouvre le lien de confirmation reçu par email, puis connecte-toi ici.";renderAccount();return}}
+    else sbStore(await sbAuth("token?grant_type=password",{email,password}));
+    sbState.busy=false;renderAccount();sbChip();toast("Connecté.");await sbPull(true);
+  }catch(err){sbState.busy=false;sbState.err=err.message||"Connexion impossible.";renderAccount()}
+});
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+  if("sbsync" in t.dataset)sbPull(false);
+  else if("sbout" in t.dataset){if(t.dataset.armed){sbSaveSession(null);sbChip();renderAccount();toast("Déconnecté. Tes données restent sur ce téléphone.")}else{t.dataset.armed="1";t.textContent="Appuie encore pour te déconnecter"}}
+});
+window.addEventListener("online",()=>{if(sbSession)sbPush()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&sbSession)sbPull(false)});
+/* Ask the browser to keep this site's storage (reduces the risk of automatic clean-up). */
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+applyIngOv();buildCrousFields();fillForm();applyWizard();refresh();renderSport();initCloud();renderAccount();sbChip();if(SB&&sbSession)sbPull(false);
 </script>
 
 <script>
