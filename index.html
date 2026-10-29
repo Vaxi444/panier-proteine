@@ -2314,17 +2314,28 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash/.test(n)&&!/lite|image|tts|live|audio|thinking|exp|preview/.test(n)).sort((a,b)=>v(b)-v(a));
 }
-async function askGemini(msgs,retried){
-  {const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(coachCfg.model||PROVIDERS.gemini.model)}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({systemInstruction:{parts:[{text:COACH_SYS}]},contents:msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}))})});
-    const d=await r.json();
-    const em=d?.error?.message||"";
-    if(!r.ok&&!retried&&(r.status===404||/not found|not supported|no longer available|update your code|deprecated|model/i.test(em))&&!/API key/i.test(em)){
-      const sug=(em.match(/models\/(gemini-[\w.\-]+)/g)||[]).map(x=>x.replace("models/","")).filter(x=>x!==(coachCfg.model||PROVIDERS.gemini.model));
+let coachOnText=null;
+/* Streamed answer with light reasoning: text shows up as it is written. */
+async function askGemini(msgs,retried,think=true){
+  const model=coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
+  if(think)gc.thinkingConfig=/gemini-2\.5/.test(model)?{thinkingBudget:0}:{thinkingLevel:"low"};
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({systemInstruction:{parts:[{text:COACH_SYS}]},contents:msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]})),generationConfig:gc})});
+  if(!r.ok){
+    const d=await r.json().catch(()=>({})),e0=Array.isArray(d)?d[0]:d,em=e0?.error?.message||"",st=e0?.error?.status;
+    if(think&&/thinking/i.test(em))return askGemini(msgs,retried,false);
+    if(!retried&&(r.status===404||/not found|not supported|no longer available|update your code|deprecated|model/i.test(em))&&!/API key/i.test(em)){
+      const sug=(em.match(/models\/(gemini-[\w.\-]+)/g)||[]).map(x=>x.replace("models/","")).filter(x=>x!==model);
       let next=sug[0];if(!next){try{next=(await geminiModels())[0]}catch(e){}}
-      if(next){coachCfg.model=next;saveCoachCfg();return askGemini(msgs,true)}}
-    if(!r.ok)throw new Error(d?.error?.status==="RESOURCE_EXHAUSTED"?"Limite gratuite atteinte pour aujourd'hui, réessaie plus tard.":d?.error?.status==="PERMISSION_DENIED"||/API key/i.test(d?.error?.message||"")?"Clé refusée : vérifie-la dans Réglages.":(d?.error?.message||("Erreur "+r.status)));
-    return (d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+      if(next){coachCfg.model=next;saveCoachCfg();return askGemini(msgs,true,think)}}
+    throw new Error(st==="RESOURCE_EXHAUSTED"?"Limite gratuite atteinte pour aujourd'hui, réessaie plus tard.":st==="PERMISSION_DENIED"||/API key/i.test(em)?"Clé refusée : vérifie-la dans Réglages.":(em||("Erreur "+r.status)));
   }
+  const reader=r.body.getReader(),dec=new TextDecoder();let buf="",text="";
+  for(;;){const{value,done}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});
+    let i;while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);
+      if(!line.startsWith("data:"))continue;
+      try{const d=JSON.parse(line.slice(5));text+=(d.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");if(coachOnText&&text)coachOnText(text)}catch(e){}}}
+  return text;
 }
 const inClaude=()=>!!(window.claude&&window.claude.use);
 function aiReady(){return inClaude()||(coachCfg.provider!=="none"&&coachCfg.key)}
@@ -2347,8 +2358,8 @@ function coachHtml(){
      <label class="f">Modèle (facultatif)<input id="co-model" value="${esc(coachCfg.model||"")}" placeholder="${coachCfg.provider!=="none"?PROVIDERS[coachCfg.provider]?.model||"":""}"></label>
      <button class="btn primary block" data-coachsave>Enregistrer</button>
      <p class="note">Gemini propose une offre gratuite (clé sur aistudio.google.com). Anthropic est payant à l'usage (clé sur console.anthropic.com), de l'ordre de quelques centimes par mois pour un usage normal. Ne partage jamais ta clé.</p></div>`;
-  else body=`<div class="chat" id="chat">${coachMsgs.length?coachMsgs.map(m=>`<div class="msg ${m.r}">${esc(m.t).replace(/\n/g,"<br>")}</div>`).join(""):`<p class="note">Pose-moi une question sur tes repas, tes séances, ton sommeil ou ta progression. ${aiReady()?"Je réponds à partir de tes données.":"Sans IA activée, je réponds avec mes constats automatiques."}</p>${aiReady()?"":`<button class="btn primary sm" data-coachtab="settings">Activer l'IA gratuite (1 min)</button>`}`}
-     ${coachBusy?`<div class="msg ai busy">Je réfléchis…</div>`:""}</div>
+  else body=`<div class="chat" id="chat">${coachMsgs.length?coachMsgs.map(m=>`<div class="msg ${m.r}${m.live?" live":""}">${esc(m.t).replace(/\n/g,"<br>")}</div>`).join(""):`<p class="note">Pose-moi une question sur tes repas, tes séances, ton sommeil ou ta progression. ${aiReady()?"Je réponds à partir de tes données.":"Sans IA activée, je réponds avec mes constats automatiques."}</p>${aiReady()?"":`<button class="btn primary sm" data-coachtab="settings">Activer l'IA gratuite (1 min)</button>`}`}
+     ${coachBusy&&!coachMsgs.some(m=>m.live)?`<div class="msg ai busy">Je réfléchis…</div>`:""}</div>
      <div class="chips wrap">${["Pourquoi je stagne ?","Que manger après ma séance ?","Mes calories sont-elles bonnes ?","Comment avancer vers mon objectif ?","Analyse ma semaine"].map(q=>`<button class="chip" data-coachq="${esc(q)}">${q}</button>`).join("")}</div>
      <form class="ask" id="coachForm"><input id="coach-in" placeholder="Ta question…" autocomplete="off" aria-label="Ta question"><button class="btn primary" type="submit" ${coachBusy?"disabled":""}>Envoyer</button></form>`;
   return `<h2>Coach</h2>${tabs}${body}`;
@@ -2357,9 +2368,12 @@ function openCoach(){openSheet(null,coachHtml(),"Coach");const c=document.getEle
 function rerenderCoach(){const b=document.querySelector(".sheet .body");if(b){b.innerHTML=coachHtml();const c=document.getElementById("chat");if(c)c.scrollTop=c.scrollHeight}}
 async function coachAsk(q){
   q=q.trim();if(!q||coachBusy)return;coachMsgs.push({r:"me",t:q});coachBusy=true;rerenderCoach();
-  try{const a=aiReady()?await askAI(q):null;coachMsgs.push({r:"ai",t:a||offlineAnswer(q)})}
-  catch(e){coachMsgs.push({r:"ai",t:offlineAnswer(q)+`\n\n(L'IA n'a pas répondu : ${e&&(e.message||e.code)||"erreur réseau"}.)`})}
-  coachBusy=false;rerenderCoach();
+  const live={r:"ai",t:"",live:true};
+  coachOnText=t=>{if(!coachMsgs.includes(live))coachMsgs.push(live);live.t=t;
+    const el=document.querySelector(".msg.ai.live");if(el){el.innerHTML=esc(t).replace(/\n/g,"<br>");const c=document.getElementById("chat");if(c)c.scrollTop=c.scrollHeight}else rerenderCoach()};
+  try{const a=aiReady()?await askAI(q):null;if(coachMsgs.includes(live)){live.t=a||live.t}else coachMsgs.push({r:"ai",t:a||offlineAnswer(q)})}
+  catch(e){const m=offlineAnswer(q)+`\n\n(L'IA n'a pas répondu : ${e&&(e.message||e.code)||"erreur réseau"}.)`;if(coachMsgs.includes(live))live.t+="\n\n"+m;else coachMsgs.push({r:"ai",t:m})}
+  delete live.live;coachOnText=null;coachBusy=false;rerenderCoach();
 }
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
   if("coach" in d)openCoach();
