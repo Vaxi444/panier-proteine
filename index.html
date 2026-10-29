@@ -2205,7 +2205,7 @@ document.addEventListener("submit",e=>{
    Claude when the page runs inside Claude, otherwise the user's own Anthropic or Gemini API key,
    stored only on this device. */
 let coachCfg=(()=>{try{return JSON.parse(localStorage.getItem("pp_coachcfg")||"null")||{provider:"none",key:"",model:""}}catch(e){return{provider:"none",key:"",model:""}}})();
-function saveCoachCfg(){try{localStorage.setItem("pp_coachcfg",JSON.stringify(coachCfg))}catch(e){}}
+function saveCoachCfg(){try{localStorage.setItem("pp_coachcfg",JSON.stringify(coachCfg))}catch(e){}try{sbSchedule()}catch(e){}}
 let coachMsgs=[],coachBusy=false,coachTab="ask";
 const PROVIDERS={anthropic:{n:"Anthropic (Claude)",model:"claude-haiku-5-5",url:"console.anthropic.com"},gemini:{n:"Google Gemini",model:"gemini-2.5-flash",url:"aistudio.google.com"}};
 
@@ -2297,18 +2297,30 @@ Ne recommande pas de produits dopants ni de régimes extrêmes.`;
 async function askAI(q){
   const ctx=coachContext(),hist=coachMsgs.slice(-8).map(m=>({role:m.r==="me"?"user":"assistant",content:m.t}));
   const userMsg=`Mes données actuelles :\n${ctx}\n\nMa question : ${q}`;
-  const msgs=[...hist.slice(0,-1),{role:"user",content:userMsg}];
+  const msgs=[...hist.slice(0,-1),{role:"user",content:userMsg}];while(msgs.length>1&&msgs[0].role!=="user")msgs.shift();
   const sample=window.claude&&window.claude.use?await window.claude.use("sample"):null;
   if(sample){const r=await sample(COACH_SYS+"\n\n"+userMsg,{modelTier:"default",cache:false});return r.text}
   if(coachCfg.provider==="anthropic"){
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":coachCfg.key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:coachCfg.model||PROVIDERS.anthropic.model,max_tokens:900,system:COACH_SYS,messages:msgs})});
     const d=await r.json();if(!r.ok)throw new Error(d?.error?.message||("Erreur "+r.status));return d.content.map(c=>c.text||"").join("");
   }
-  if(coachCfg.provider==="gemini"){
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(coachCfg.model||PROVIDERS.gemini.model)}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({systemInstruction:{parts:[{text:COACH_SYS}]},contents:msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}))})});
-    const d=await r.json();if(!r.ok)throw new Error(d?.error?.message||("Erreur "+r.status));return (d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
-  }
+  if(coachCfg.provider==="gemini")return askGemini(msgs,false);
   return null;
+}
+async function geminiModels(){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(coachCfg.key)}&pageSize=200`);const d=await r.json();
+  if(!r.ok)throw new Error(d?.error?.message||("Erreur "+r.status));
+  const v=n=>(n.match(/(\d+(?:\.\d+)?)/)||[0,0])[1]*1;
+  return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
+    .filter(n=>/flash/.test(n)&&!/lite|image|tts|live|audio|thinking|exp|preview/.test(n)).sort((a,b)=>v(b)-v(a));
+}
+async function askGemini(msgs,retried){
+  {const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(coachCfg.model||PROVIDERS.gemini.model)}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({systemInstruction:{parts:[{text:COACH_SYS}]},contents:msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}))})});
+    const d=await r.json();
+    if(!r.ok&&!retried&&(r.status===404||/not found|not supported/i.test(d?.error?.message||""))){const ms=await geminiModels();if(ms.length){coachCfg.model=ms[0];saveCoachCfg();return askGemini(msgs,true)}}
+    if(!r.ok)throw new Error(d?.error?.status==="RESOURCE_EXHAUSTED"?"Limite gratuite atteinte pour aujourd'hui, réessaie plus tard.":d?.error?.status==="PERMISSION_DENIED"||/API key/i.test(d?.error?.message||"")?"Clé refusée : vérifie-la dans Réglages.":(d?.error?.message||("Erreur "+r.status)));
+    return (d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+  }
 }
 const inClaude=()=>!!(window.claude&&window.claude.use);
 function aiReady(){return inClaude()||(coachCfg.provider!=="none"&&coachCfg.key)}
@@ -2321,12 +2333,17 @@ function coachHtml(){
   else if(coachTab==="settings")body=`<div class="box">
      ${inClaude()?`<p>Dans Claude, le coach utilise Claude directement : rien à régler.</p>`:""}
      <p class="note">Hors de Claude, l'appli peut utiliser ta propre clé d'IA. Elle reste enregistrée uniquement sur ce téléphone et n'est envoyée qu'au fournisseur choisi.</p>
-     <label class="f">Fournisseur<select id="co-prov"><option value="none" ${coachCfg.provider==="none"?"selected":""}>Aucun (conseils automatiques seulement)</option>${Object.entries(PROVIDERS).map(([k,p])=>`<option value="${k}" ${coachCfg.provider===k?"selected":""}>${p.n}</option>`).join("")}</select></label>
+     <div class="welcome"><h3>Activer l'IA gratuite (Gemini)</h3><ol class="warmlist" style="padding:0 0 0 20px">
+       <li>Ouvre <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> et connecte-toi avec un compte Google.</li>
+       <li>Clique sur <b>Create API key</b>, puis copie la clé (elle commence par « AIza »).</li>
+       <li>Colle-la ci-dessous et enregistre.</li></ol>
+       <p class="note">${SB?"Connecté à ton compte, la clé est aussi sauvegardée dans ta sauvegarde privée : tu la retrouves sur tes autres appareils.":"La clé reste sur ce téléphone."} Elle n'est jamais publiée sur GitHub.</p></div>
+     <label class="f">Fournisseur<select id="co-prov"><option value="none" ${coachCfg.provider==="none"?"selected":""}>Aucun (conseils automatiques seulement)</option>${Object.entries(PROVIDERS).map(([k,p])=>`<option value="${k}" ${coachCfg.provider===k||(coachCfg.provider==="none"&&k==="gemini"&&!coachCfg.key)?"selected":""}>${p.n}${k==="gemini"?" (gratuit)":""}</option>`).join("")}</select></label>
      <label class="f">Clé d'API<input id="co-key" type="password" autocomplete="off" value="${esc(coachCfg.key||"")}" placeholder="colle ta clé ici"></label>
      <label class="f">Modèle (facultatif)<input id="co-model" value="${esc(coachCfg.model||"")}" placeholder="${coachCfg.provider!=="none"?PROVIDERS[coachCfg.provider]?.model||"":""}"></label>
      <button class="btn primary block" data-coachsave>Enregistrer</button>
      <p class="note">Gemini propose une offre gratuite (clé sur aistudio.google.com). Anthropic est payant à l'usage (clé sur console.anthropic.com), de l'ordre de quelques centimes par mois pour un usage normal. Ne partage jamais ta clé.</p></div>`;
-  else body=`<div class="chat" id="chat">${coachMsgs.length?coachMsgs.map(m=>`<div class="msg ${m.r}">${esc(m.t).replace(/\n/g,"<br>")}</div>`).join(""):`<p class="note">Pose-moi une question sur tes repas, tes séances, ton sommeil ou ta progression. ${aiReady()?"Je réponds à partir de tes données.":"Sans IA activée, je réponds avec mes constats automatiques ; active une clé dans Réglages pour les questions libres."}</p>`}
+  else body=`<div class="chat" id="chat">${coachMsgs.length?coachMsgs.map(m=>`<div class="msg ${m.r}">${esc(m.t).replace(/\n/g,"<br>")}</div>`).join(""):`<p class="note">Pose-moi une question sur tes repas, tes séances, ton sommeil ou ta progression. ${aiReady()?"Je réponds à partir de tes données.":"Sans IA activée, je réponds avec mes constats automatiques."}</p>${aiReady()?"":`<button class="btn primary sm" data-coachtab="settings">Activer l'IA gratuite (1 min)</button>`}`}
      ${coachBusy?`<div class="msg ai busy">Je réfléchis…</div>`:""}</div>
      <div class="chips wrap">${["Pourquoi je stagne ?","Que manger après ma séance ?","Mes calories sont-elles bonnes ?","Comment avancer vers mon objectif ?","Analyse ma semaine"].map(q=>`<button class="chip" data-coachq="${esc(q)}">${q}</button>`).join("")}</div>
      <form class="ask" id="coachForm"><input id="coach-in" placeholder="Ta question…" autocomplete="off" aria-label="Ta question"><button class="btn primary" type="submit" ${coachBusy?"disabled":""}>Envoyer</button></form>`;
@@ -2391,7 +2408,7 @@ document.addEventListener("change",e=>{if(e.target.id==="bc-file"&&e.target.file
    Email + password login. All app data is saved as one JSON row per user, protected by row-level
    security (each account reads and writes only its own row). Plain REST calls, no library. */
 const SB=(window.PP_CONFIG&&window.PP_CONFIG.supabaseUrl&&window.PP_CONFIG.supabaseKey)?{url:window.PP_CONFIG.supabaseUrl.replace(/\/$/,""),key:window.PP_CONFIG.supabaseKey}:null;
-const SYNC_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training"];
+const SYNC_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg"];
 let sbSession=(()=>{try{return JSON.parse(localStorage.getItem("pp_sbsession")||"null")}catch(e){return null}})();
 let sbState={busy:false,err:null,last:(()=>{try{return +localStorage.getItem("pp_sblast")||0}catch(e){return 0}})()};
 let sbTimer=null,sbPushing=false;
