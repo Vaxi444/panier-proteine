@@ -2206,7 +2206,7 @@ document.addEventListener("submit",e=>{
    stored only on this device. */
 let coachCfg=(()=>{try{return JSON.parse(localStorage.getItem("pp_coachcfg")||"null")||{provider:"none",key:"",model:""}}catch(e){return{provider:"none",key:"",model:""}}})();
 function saveCoachCfg(){try{localStorage.setItem("pp_coachcfg",JSON.stringify(coachCfg))}catch(e){}try{sbSchedule()}catch(e){}}
-let coachMsgs=[],coachBusy=false,coachTab="ask",coachModels=[],coachTestMsg="";
+let coachStatus="Je réfléchis…",coachMsgs=[],coachBusy=false,coachTab="ask",coachModels=[],coachTestMsg="";
 const PROVIDERS={anthropic:{n:"Anthropic (Claude)",model:"claude-haiku-5-5",url:"console.anthropic.com"},gemini:{n:"Google Gemini",model:"gemini-3.8-flash",url:"aistudio.google.com"}};
 
 function insights(){
@@ -2314,10 +2314,10 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-29-6";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-29-7";
 /* Streamed answer with light reasoning: text shows up as it is written. */
-async function askGemini(msgs,retried,think=true,stream=true){
-  const model=coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
+async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
+  const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
   if(think)gc.thinkingConfig=/gemini-2\.5/.test(model)?{thinkingBudget:0}:{thinkingLevel:"low"};
   const ctl=new AbortController();coachAbort=ctl;const to=setTimeout(()=>ctl.abort("timeout"),60000);
   let r;
@@ -2326,11 +2326,20 @@ async function askGemini(msgs,retried,think=true,stream=true){
   catch(e){clearTimeout(to);throw new Error(ctl.signal.aborted?(ctl.signal.reason==="stop"?"Arrêté.":"Pas de réponse au bout d'une minute : Google est peut-être saturé, réessaie ou choisis un modèle plus rapide dans Réglages."):"Réseau indisponible.")}
   if(!r.ok){clearTimeout(to);
     const d=await r.json().catch(()=>({})),e0=Array.isArray(d)?d[0]:d,em=e0?.error?.message||"",st=e0?.error?.status;
-    if(think&&/thinking/i.test(em))return askGemini(msgs,retried,false,stream);
+    if(think&&/thinking/i.test(em))return askGemini(msgs,retried,false,stream,modelOv,tried);
+    // Overloaded model: retry once after a short pause, then switch to another model for this answer.
+    if(r.status===503||r.status===429&&st!=="RESOURCE_EXHAUSTED"||st==="UNAVAILABLE"||/high demand|overloaded|try again later/i.test(em)){
+      const done=[...tried,model];
+      if(!tried.length){if(coachOnBusy)coachOnBusy("Gemini est saturé, nouvel essai…");await new Promise(z=>setTimeout(z,2500));return askGemini(msgs,retried,think,stream,model,[model+"#retry"])}
+      let alts=[];try{alts=(await geminiModels()).filter(m=>!done.some(d=>d.split("#")[0]===m))}catch(e){}
+      alts.sort((a,b)=>(/lite/.test(b)-/lite/.test(a)));
+      if(alts.length&&done.length<4){if(coachOnBusy)coachOnBusy(`Modèle saturé, essai avec ${alts[0]}…`);return askGemini(msgs,retried,think,stream,alts[0],done)}
+      throw new Error("Tous les modèles Gemini gratuits sont saturés en ce moment. Réessaie dans quelques minutes.");
+    }
     if(!retried&&(r.status===404||/not found|not supported|no longer available|update your code|deprecated|model/i.test(em))&&!/API key/i.test(em)){
       const sug=(em.match(/models\/(gemini-[\w.\-]+)/g)||[]).map(x=>x.replace("models/","")).filter(x=>x!==model);
       let next=sug[0];if(!next){try{next=(await geminiModels())[0]}catch(e){}}
-      if(next){coachCfg.model=next;saveCoachCfg();return askGemini(msgs,true,think,stream)}}
+      if(next){coachCfg.model=next;saveCoachCfg();return askGemini(msgs,true,think,stream,null,tried)}}
     throw new Error(st==="RESOURCE_EXHAUSTED"?"Limite gratuite atteinte pour aujourd'hui, réessaie plus tard.":st==="PERMISSION_DENIED"||/API key/i.test(em)?"Clé refusée : vérifie-la dans Réglages.":(em||("Erreur "+r.status)));
   }
   const partsText=d=>(d.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
@@ -2344,7 +2353,7 @@ async function askGemini(msgs,retried,think=true,stream=true){
           try{text+=partsText(JSON.parse(line.slice(5)));if(coachOnText&&text)coachOnText(text)}catch(e){}}}}
   }catch(e){clearTimeout(to);if(ctl.signal.aborted)throw new Error(ctl.signal.reason==="stop"?"Arrêté.":"Pas de réponse au bout d'une minute.");if(!text)throw e}
   clearTimeout(to);
-  if(!text&&stream)return askGemini(msgs,true,false,false);
+  if(!text&&stream)return askGemini(msgs,true,false,false,modelOv,tried);
   if(!text)throw new Error("Réponse vide de Gemini : essaie un autre modèle dans Réglages.");
   return text;
 }
@@ -2373,7 +2382,7 @@ function coachHtml(){
      <button class="btn primary block" data-coachsave>Enregistrer</button>
      <p class="note">Gemini propose une offre gratuite (clé sur aistudio.google.com). Anthropic est payant à l'usage (clé sur console.anthropic.com), de l'ordre de quelques centimes par mois pour un usage normal. Ne partage jamais ta clé.</p></div>`;
   else body=`<div class="chat" id="chat">${coachMsgs.length?coachMsgs.map(m=>`<div class="msg ${m.r}${m.live?" live":""}">${esc(m.t).replace(/\n/g,"<br>")}</div>`).join(""):`<p class="note">Pose-moi une question sur tes repas, tes séances, ton sommeil ou ta progression. ${aiReady()?"Je réponds à partir de tes données.":"Sans IA activée, je réponds avec mes constats automatiques."}</p>${aiReady()?"":`<button class="btn primary sm" data-coachtab="settings">Activer l'IA gratuite (1 min)</button>`}`}
-     ${coachBusy&&!coachMsgs.some(m=>m.live)?`<div class="msg ai busy">Je réfléchis… <span id="coach-sec">${Math.round((Date.now()-coachStart)/1000)} s</span> <button class="linkbtn" data-coachstop>Arrêter</button></div>`:""}</div>
+     ${coachBusy&&!coachMsgs.some(m=>m.live)?`<div class="msg ai busy"><span id="coach-status">${esc(coachStatus)}</span> <span id="coach-sec">${Math.round((Date.now()-coachStart)/1000)} s</span> <button class="linkbtn" data-coachstop>Arrêter</button></div>`:""}</div>
      <div class="chips wrap">${["Pourquoi je stagne ?","Que manger après ma séance ?","Mes calories sont-elles bonnes ?","Comment avancer vers mon objectif ?","Analyse ma semaine"].map(q=>`<button class="chip" data-coachq="${esc(q)}">${q}</button>`).join("")}</div>
      <form class="ask" id="coachForm"><input id="coach-in" placeholder="Ta question…" autocomplete="off" aria-label="Ta question"><button class="btn primary" type="submit" ${coachBusy?"disabled":""}>Envoyer</button></form>`;
   return `<h2>Coach</h2>${tabs}${body}`;
@@ -2381,7 +2390,8 @@ function coachHtml(){
 function openCoach(){openSheet(null,coachHtml(),"Coach");const c=document.getElementById("chat");if(c)c.scrollTop=c.scrollHeight}
 function rerenderCoach(){const b=document.querySelector(".sheet .body");if(b){b.innerHTML=coachHtml();const c=document.getElementById("chat");if(c)c.scrollTop=c.scrollHeight}}
 async function coachAsk(q){
-  q=q.trim();if(!q||coachBusy)return;coachMsgs.push({r:"me",t:q});coachBusy=true;coachStart=Date.now();rerenderCoach();
+  q=q.trim();if(!q||coachBusy)return;coachMsgs.push({r:"me",t:q});coachBusy=true;coachStart=Date.now();coachStatus="Je réfléchis…";
+  coachOnBusy=m=>{coachStatus=m;const e=document.getElementById("coach-status");if(e)e.textContent=m};rerenderCoach();
   clearInterval(coachTick);coachTick=setInterval(()=>{const e=document.getElementById("coach-sec");if(e)e.textContent=Math.round((Date.now()-coachStart)/1000)+" s"},1000);
   const live={r:"ai",t:"",live:true};
   coachOnText=t=>{if(!coachMsgs.includes(live))coachMsgs.push(live);live.t=t;
