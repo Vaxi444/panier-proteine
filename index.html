@@ -373,6 +373,15 @@ form.profile.wizard fieldset{min-height:300px;align-content:start}
 form.ask{display:flex;gap:8px}
 form.ask input{flex:1;min-width:0;min-height:48px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;background:var(--surface)}
 #dataBox,#acctBox{margin-top:16px}
+.lvband{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.lvband.alt{background:color-mix(in srgb,var(--surface2) 45%,transparent)}
+.lvband span{position:absolute;left:6px;top:8px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.skx{font-size:.66rem;color:var(--muted);font-weight:400}
+.blk{margin:10px 0 0;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.blkhead{margin:4px 2px -4px}.blkhead h3{font-size:1.05rem}
+.pairtag{display:inline-block;font-family:var(--f-display);font-size:.72rem;font-weight:700;background:var(--t-dairy-bg);color:var(--t-dairy);border-radius:6px;padding:0 6px;vertical-align:1px}
+.tipline,.tempo{font-size:.9rem;margin:0}
+.tempo{color:var(--muted)}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -1396,29 +1405,108 @@ pf.addEventListener("input",hint);
    the step's range; when every set reaches the top with at least 1 rep in reserve, move up a step.
    Two sessions below the bottom of the range move down a step. Readiness and repeated hard sessions
    reduce volume (fewer sets) rather than intensity. */
+/* Exercise ladders, ordered by difficulty. Steps: [name, low, high, perSide, shortLabel].
+   Ordering follows Overcoming Gravity (Steven Low) progression charts and the r/bodyweightfitness routine.
+   tr = [first, last] difficulty tier on the skill tree (0 beginner … 9 elite). */
 const FAM={
- pull:{n:"Tirage vertical",cue:"Omoplates basses et serrées, menton au-dessus de la barre, descente contrôlée.",steps:[
-   ["Rowing australien",8,15],["Tractions négatives (descente en 4 s)",3,6],["Tractions",4,8],["Tractions",8,12],["Tractions explosives, poitrine à la barre",4,8],["Tractions archer",3,6,1],["Tractions à un bras négatives",2,4,1]]},
- row:{n:"Tirage horizontal",cue:"Corps gainé comme une planche, tire la barre vers le bas des pectoraux.",steps:[
-   ["Rowing australien genoux pliés",8,15],["Rowing australien jambes tendues",8,15],["Rowing australien pieds surélevés",8,12],["Rowing archer",5,10,1],["Tuck front lever row",4,8]]},
- dips:{n:"Dips",cue:"Épaules basses, descends jusqu'à ce que les épaules passent sous les coudes.",steps:[
-   ["Dips sur banc",8,15],["Dips négatifs (descente en 4 s)",3,6],["Dips aux barres parallèles",5,10],["Dips aux barres parallèles",10,15],["Dips sur barre droite",5,10]]},
- pushup:{n:"Pompes",cue:"Coudes à 45°, gainage serré, poitrine au sol à chaque répétition.",steps:[
-   ["Pompes inclinées (mains sur un banc)",8,15],["Pompes",8,15],["Pompes diamant",8,12],["Pompes archer",5,8,1],["Pompes pseudo-planche",6,10],["Pompes à un bras inclinées",3,6,1]]},
- vpush:{n:"Poussée verticale",cue:"Hanches hautes, la tête descend devant les mains en formant un triangle.",steps:[
-   ["Pompes pike",6,12],["Pompes pike pieds surélevés",5,10],["Pompes en équilibre au mur, négatives",3,5],["Pompes en équilibre au mur",3,8]]},
- legs:{n:"Jambes",cue:"Genou dans l'axe du pied, descente contrôlée, talon au sol.",steps:[
-   ["Squats",12,20],["Fentes bulgares",8,12,1],["Squat crevette assisté",5,8,1],["Pistol squat sur banc",5,8,1],["Pistol squat",3,8,1]]},
- core:{n:"Abdos suspendus",cue:"Pas d'élan : bascule le bassin et contrôle la descente.",steps:[
-   ["Relevés de genoux suspendu",8,15],["Relevés de jambes suspendu",6,12],["Toes to bar",5,10],["Essuie-glaces",4,8,1]]},
- lsit:{n:"L-sit",kind:"hold",cue:"Épaules poussées loin des oreilles, jambes serrées.",steps:[
-   ["Hollow body",20,40],["Tuck L-sit",10,20],["L-sit une jambe",8,15],["L-sit",8,15]]},
- flever:{n:"Front lever",kind:"hold",skill:1,cue:"Bras tendus, omoplates basses, bassin aligné avec les épaules.",steps:[
-   ["Tuck front lever",8,15],["Advanced tuck front lever",6,12],["Front lever une jambe",5,10],["Straddle front lever",4,8],["Front lever",3,6]]},
- planche:{n:"Planche",kind:"hold",skill:1,cue:"Bras verrouillés, épaules en avant des mains, dos rond.",steps:[
-   ["Planche lean",15,30],["Frog stand",15,30],["Tuck planche",6,12],["Advanced tuck planche",5,10],["Straddle planche",3,6]]},
- muscleup:{n:"Muscle-up",skill:1,cue:"Tire vers les hanches, pas vers le menton, puis bascule vite les poignets.",steps:[
-   ["Tractions hautes (nombril à la barre)",3,6],["Muscle-up négatif",2,4],["Muscle-up avec élan",2,5],["Muscle-up strict",1,5]]},
+ pull:{n:"Tractions",tr:[0,9],cue:"Commence par abaisser les omoplates, poitrine vers la barre, descente contrôlée jusqu'aux bras tendus.",steps:[
+   ["Tractions scapulaires (bras tendus)",8,12,0,"Tractions scapulaires"],["Rowing australien",8,15,0,"Rowing australien"],["Tractions négatives (descente en 4 s)",3,6,0,"Tractions négatives"],
+   ["Tractions",4,8,0,"3 × 8 tractions"],["Tractions",8,12,0,"3 × 12 tractions"],["Tractions explosives, poitrine à la barre",4,8,0,"Tractions explosives"],
+   ["Tractions en L-sit",4,8,0,"Tractions L-sit"],["Tractions typewriter",3,6,1,"Typewriter"],["Tractions archer",3,6,1,"Tractions archer"],
+   ["Traction à un bras, négative (5 s)",2,4,1,"Traction 1 bras négative"],["Traction à un bras assistée (serviette)",2,4,1,"Traction 1 bras assistée"],["Traction à un bras",1,3,1,"Traction à un bras"]]},
+ row:{n:"Tirage horizontal",tr:[0,7.6],cue:"Corps gainé comme une planche, tire la barre vers le bas des pectoraux, coudes près du corps.",steps:[
+   ["Rowing australien genoux pliés",8,15,0,"Rowing genoux pliés"],["Rowing australien jambes tendues",8,15,0,"Rowing jambes tendues"],["Rowing australien pieds surélevés",8,12,0,"Rowing pieds surélevés"],
+   ["Rowing pieds surélevés, pause 2 s en haut",6,10,0,"Rowing avec pause"],["Rowing archer",5,10,1,"Rowing archer"],["Tuck front lever row",4,8,0,"Tuck FL row"],
+   ["Advanced tuck front lever row",3,6,0,"Adv tuck FL row"],["Straddle front lever row",2,5,0,"Straddle FL row"]]},
+ dips:{n:"Dips",tr:[0,8],cue:"Épaules basses et en arrière, descends jusqu'à ce que l'épaule passe sous le coude, verrouille en haut.",steps:[
+   ["Dips sur banc",8,15,0,"Dips sur banc"],["Dips négatifs (descente en 4 s)",3,6,0,"Dips négatifs"],["Dips aux barres parallèles",5,10,0,"3 × 10 dips"],
+   ["Dips aux barres parallèles",10,15,0,"3 × 15 dips"],["Dips sur barre droite",5,10,0,"Dips barre droite"],["Dips penchés vers l'avant (45°)",5,8,0,"Dips penchés 45°"],
+   ["Dips coréens (barre derrière le dos)",3,6,0,"Dips coréens"],["Russian dips",3,6,0,"Russian dips"]]},
+ pushup:{n:"Pompes",tr:[0,8.6],cue:"Coudes à 45°, fessiers et abdos serrés, poitrine au sol, omoplates écartées en haut.",steps:[
+   ["Pompes inclinées (mains sur un banc)",8,15,0,"Pompes inclinées"],["Pompes",8,15,0,"Pompes"],["Pompes diamant",8,12,0,"Pompes diamant"],
+   ["Pompes déclinées (pieds surélevés)",8,15,0,"Pompes déclinées"],["Pompes archer",5,8,1,"Pompes archer"],["Pompes pseudo-planche",6,10,0,"Pseudo-planche"],
+   ["Pompe à un bras inclinée",3,6,1,"1 bras inclinée"],["Pompe à un bras",2,6,1,"Pompe à un bras"],["Pompes en tuck planche",2,5,0,"Tuck planche push-up"]]},
+ vpush:{n:"Poussée verticale",tr:[1,8],cue:"Hanches au-dessus des mains, la tête descend devant les mains en formant un triangle, coudes vers l'arrière.",steps:[
+   ["Pompes pike",6,12,0,"Pompes pike"],["Pompes pike pieds surélevés",5,10,0,"Pike surélevées"],["Pompes pike sur box, hanches au-dessus des mains",4,8,0,"Pike sur box"],
+   ["Pompes en équilibre au mur, négatives (4 s)",3,5,0,"HSPU négatives"],["Pompes en équilibre au mur",3,8,0,"HSPU au mur"],["HSPU au mur en déficit (parallettes)",3,6,0,"HSPU en déficit"],
+   ["HSPU libre",1,5,0,"HSPU libre"]]},
+ legs:{n:"Jambes",tr:[0,7],cue:"Genou dans l'axe du pied, talon au sol, descente contrôlée en 2 à 3 s.",steps:[
+   ["Squats",12,20,0,"Squats"],["Fentes bulgares",8,12,1,"Fentes bulgares"],["Squat crevette assisté",5,8,1,"Crevette assisté"],
+   ["Pistol squat sur banc",5,8,1,"Pistol sur banc"],["Pistol squat",3,8,1,"Pistol squat"],["Squat crevette complet",3,8,1,"Crevette complet"],["Pistol squat lesté (5 à 10 kg)",3,6,1,"Pistol lesté"]]},
+ post:{n:"Ischios et fessiers",tr:[0.5,6],cue:"Bassin en rétroversion, pousse avec le talon ; au Nordic, hanches tendues pendant toute la descente.",steps:[
+   ["Pont fessier à une jambe",10,15,1,"Pont fessier 1 jambe"],["Hip thrust à une jambe, épaules sur un banc",8,12,1,"Hip thrust 1 jambe"],["Nordic curl négatif (descente 3 à 5 s)",3,6,0,"Nordic négatif"],
+   ["Nordic curl, poussée des mains en bas",3,6,0,"Nordic assisté"],["Nordic curl complet",3,6,0,"Nordic curl"]]},
+ core:{n:"Abdos suspendus",tr:[0.5,7],cue:"Pas d'élan : enroule le bassin vers la barre et contrôle la descente.",steps:[
+   ["Relevés de genoux suspendu",8,15,0,"Relevés de genoux"],["Relevés de jambes suspendu",6,12,0,"Relevés de jambes"],["Toes to bar",5,10,0,"Toes to bar"],
+   ["Essuie-glaces",4,8,1,"Essuie-glaces"],["Dragon flag négatif (descente 4 s)",3,6,0,"Dragon flag négatif"],["Dragon flag",3,6,0,"Dragon flag"]]},
+ lsit:{n:"L-sit · V-sit",kind:"hold",tr:[0,6.5],cue:"Pousse le sol loin de toi (épaules basses), bras verrouillés, jambes tendues et serrées, pointes de pieds tendues.",steps:[
+   ["Hollow body",20,40,0,"Hollow body"],["Tuck L-sit",10,20,0,"Tuck L-sit"],["L-sit une jambe",8,15,0,"L-sit une jambe"],["L-sit",8,15,0,"L-sit"],["V-sit 45°",5,10,0,"V-sit 45°"],["V-sit 90°",3,8,0,"V-sit 90°"]]},
+ flever:{n:"Front lever",kind:"hold",skill:1,tr:[3.5,8.5],cue:"Bras verrouillés, omoplates tirées vers les hanches, bassin en rétroversion, épaules et hanches à la même hauteur.",steps:[
+   ["Tuck front lever",8,15,0,"Tuck front lever"],["Advanced tuck front lever",6,12,0,"Adv tuck FL"],["Front lever une jambe",5,10,0,"FL une jambe"],
+   ["Straddle front lever",4,8,0,"Straddle FL"],["Front lever",3,8,0,"Front lever"],["Front lever 10 s et plus",8,15,0,"Front lever 10 s"]]},
+ planche:{n:"Planche",kind:"hold",skill:1,tr:[1.5,9],cue:"Coudes verrouillés, épaules loin devant les mains, dos rond (protraction), mains tournées vers l'extérieur.",steps:[
+   ["Planche lean",15,30,0,"Planche lean"],["Frog stand",15,30,0,"Frog stand"],["Tuck planche",6,12,0,"Tuck planche"],["Advanced tuck planche",5,10,0,"Adv tuck planche"],
+   ["Straddle planche",3,6,0,"Straddle planche"],["Planche une jambe",3,6,0,"Planche 1 jambe"],["Planche complète",2,5,0,"Planche complète"]]},
+ muscleup:{n:"Muscle-up",skill:1,tr:[4.5,8.5],cue:"Tire vers le nombril, pas vers le menton, corps légèrement devant la barre, puis bascule vite les poignets au-dessus.",steps:[
+   ["Tractions hautes (nombril à la barre)",3,6,0,"Tractions hautes"],["Muscle-up négatif",2,4,0,"Muscle-up négatif"],["Muscle-up avec élan",2,5,0,"Muscle-up"],
+   ["Muscle-up strict",1,5,0,"Muscle-up strict"],["Muscle-up lent (3 s par phase)",1,4,0,"Muscle-up lent"]]},
+ hs:{n:"Handstand",kind:"hold",skill:1,tr:[1,7],cue:"Corps aligné (côtes rentrées, fessiers serrés), épaules ouvertes jusqu'aux oreilles, corrige l'équilibre avec les doigts.",steps:[
+   ["Équilibre poitrine face au mur",20,45,0,"Équilibre au mur"],["Équilibre au mur, talons décollés du mur",10,30,0,"Talons décollés"],["Kick-up et handstand libre",3,10,0,"Kick-up"],
+   ["Handstand libre",10,30,0,"Handstand 30 s"],["Handstand libre",30,60,0,"Handstand 60 s"],["Handstand libre, straddle puis jambes serrées",20,45,0,"Handstand straddle"]]},
+ blever:{n:"Back lever",kind:"hold",skill:1,tr:[2.5,7.5],cue:"Bras verrouillés, poitrine vers le sol, bassin en rétroversion ; monte la difficulté lentement, les biceps et épaules encaissent beaucoup.",steps:[
+   ["German hang",10,30,0,"German hang"],["Tuck back lever",8,15,0,"Tuck back lever"],["Advanced tuck back lever",6,12,0,"Adv tuck BL"],
+   ["Back lever une jambe",5,10,0,"BL une jambe"],["Straddle back lever",4,8,0,"Straddle BL"],["Back lever",3,10,0,"Back lever"]]},
+ flag:{n:"Drapeau humain",kind:"hold",skill:1,tr:[5,8],cue:"Bras du haut tire, bras du bas pousse et reste verrouillé, mains écartées de la largeur des épaules sur la barre verticale.",steps:[
+   ["Tuck drapeau",5,10,0,"Tuck flag"],["Drapeau une jambe",4,8,0,"Flag une jambe"],["Straddle drapeau",3,8,0,"Straddle flag"],["Drapeau humain",3,8,0,"Drapeau humain"]]},
+};
+/* Expert cues for specific steps, shown in sessions and on the tree. */
+const TIPS={
+ "pull:0":"Bras tendus, ne plie pas les coudes : seules les omoplates bougent. C'est la base de toute traction saine.",
+ "pull:2":"Saute en haut, puis descends en 4 à 5 s. Si tu ne contrôles plus la descente, arrête la série.",
+ "pull:3":"Prise un peu plus large que les épaules, pouces autour de la barre. Menton au-dessus de la barre, bras tendus en bas : pas de demi-répétitions.",
+ "pull:4":"Quand 3 × 12 passent, ne monte pas les répétitions à l'infini : passe aux explosives ou au lest (+5 kg) pour la force.",
+ "pull:5":"Tire le plus vite possible pour amener la poitrine (pas le menton) à la barre. C'est le prérequis direct du muscle-up.",
+ "pull:7":"Monte au centre, déplace-toi d'une main à l'autre en restant en haut, bras opposé presque tendu.",
+ "pull:8":"Le bras d'appui reste tendu sur la barre. Commence par la descente seule si la montée ne passe pas.",
+ "pull:9":"Main libre sur la poitrine, descente en 5 s, épaule engagée (pas pendue). 2 à 3 séances par semaine maximum : les coudes encaissent.",
+ "row:2":"Corps parfaitement droit des talons aux épaules. Pause 1 s barre au contact de la poitrine.",
+ "row:5":"En tuck front lever, tire la barre vers le bas du ventre. Le dos ne doit pas s'enrouler.",
+ "dips:1":"Descente en 4 s jusqu'à 90° au coude minimum, puis remonte en sautant.",
+ "dips:2":"Épaules basses, buste légèrement penché. Profondeur : l'épaule passe sous le coude.",
+ "dips:4":"Sur barre droite, garde la barre près du corps et penche-toi en avant : c'est la seconde moitié du muscle-up.",
+ "dips:5":"Plus tu te penches, plus les épaules travaillent comme en planche. Excellent transfert vers la planche.",
+ "pushup:3":"Pieds sur un banc à hauteur de hanches : plus d'épaules, prépare la poussée verticale.",
+ "pushup:5":"Mains au niveau des hanches, doigts vers l'extérieur, épaules loin devant les mains. Garde ce penché sur toute la série.",
+ "pushup:7":"Pieds écartés plus que la largeur des épaules, coude près du corps, hanches face au sol (sans rotation).",
+ "vpush:3":"Monte au mur, descends en 4 s jusqu'à ce que la tête touche un coussin, redescends au sol. Tête devant les mains : triangle tête-mains.",
+ "vpush:4":"Mains à 20 cm du mur, tête qui touche le sol devant les mains, remonte en poussant vers le mur.",
+ "legs:3":"Assieds-toi lentement sur un banc bas sur une jambe, relève-toi sans élan. Baisse la hauteur du banc progressivement.",
+ "legs:4":"Bras devant pour équilibrer, talon au sol. Si la cheville bloque, mets une cale de 2 cm sous le talon.",
+ "post:2":"Genoux sur un coussin, chevilles bloquées. Descends le plus lentement possible en gardant les hanches tendues, rattrape-toi avec les mains.",
+ "core:2":"Bascule le bassin pour amener les pieds à la barre, pas d'élan. Si ça balance, reviens 1 s à l'arrêt entre deux répétitions.",
+ "core:4":"Sur un banc, mains derrière la tête. Seules les épaules touchent le banc, corps gainé comme une planche pendant la descente.",
+ "lsit:0":"Lombaires collées au sol, bras au-dessus de la tête, jambes tendues à 20 cm du sol.",
+ "lsit:1":"Sur parallettes ou au sol, pousse fort dans les mains pour soulever les fesses, genoux à la poitrine.",
+ "lsit:3":"Si les ischios tirent trop, travaille la souplesse (pike assis) en plus : c'est souvent elle qui limite.",
+ "lsit:4":"Lève les jambes au-dessus de l'horizontale en penchant le buste en arrière, épaules toujours basses.",
+ "flever:0":"Genoux à la poitrine, dos plat (pas rond), bras tendus. Pense « barre vers les hanches ».",
+ "flever:1":"Dos plat et cuisses à 90° du buste. C'est souvent l'étape la plus longue : sois patient.",
+ "flever:3":"Écarte les jambes le plus possible : ça raccourcit le levier. Bassin en rétroversion pour ne pas cambrer.",
+ "flever:4":"Corps à l'horizontale, chevilles à la hauteur des épaules. Valide 3 × 5 s propres avant de viser plus.",
+ "planche:0":"En position de pompe, avance les épaules loin devant les mains, bras tendus. Plus tu avances, plus c'est dur.",
+ "planche:1":"Genoux posés sur les coudes, transfère le poids vers l'avant jusqu'à décoller les pieds. Travaille aussi l'équilibre.",
+ "planche:2":"Genoux serrés à la poitrine, hanches à hauteur des épaules, bras verrouillés. Mains vers l'extérieur pour protéger les poignets.",
+ "planche:3":"Dos plat, hanches hautes. 4 à 6 mois à cette étape sont normaux.",
+ "muscleup:0":"Tire vers le nombril, explosif, et laisse les épaules monter au-dessus de la barre. Vise la barre sous les pectoraux.",
+ "muscleup:1":"Commence en haut (en appui sur la barre), descends en 4 s à travers la transition : c'est elle que tu apprends.",
+ "muscleup:2":"Petit balancier creux puis bombé, tire vers le nombril, poitrine au-dessus, puis dip sur barre droite.",
+ "muscleup:3":"Sans élan. Prise fausse (false grip) ou prise serrée pour faciliter la transition.",
+ "hs:0":"Ventre face au mur, mains à 10 cm du mur, corps droit. C'est la position du handstand libre.",
+ "hs:2":"Monte avec une jambe, l'autre suit. Apprends à sortir en roulade avant ou en pivot pour tomber sans risque.",
+ "hs:3":"Corrige avec les doigts quand tu tombes en avant, avec la paume quand tu tombes en arrière. Fais plein d'essais courts.",
+ "blever:0":"Suspendu, passe les pieds entre les bras et descends lentement dans l'étirement. Va-y doucement : épaules très étirées.",
+ "blever:1":"Depuis le skin the cat, tiens dos à l'horizontale, genoux à la poitrine, bras tendus.",
+ "flag:0":"Mains en largeur d'épaules sur une barre verticale. Bras du bas verrouillé qui pousse, genoux à la poitrine.",
 };
 const TPL={
  A:{n:"Full body A",f:["pull","dips","legs","flever","core"]},
@@ -1445,22 +1533,31 @@ const isoDay=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMont
 const daysSince=iso=>Math.floor((Date.now()-new Date(iso+"T12:00:00").getTime())/864e5);
 /* Skill tree: some steps need a base in other families first (e.g. muscle-up after solid pull-ups and dips).
    A requirement {fam:i} means "have reached step i of that family". */
-const GATES={"muscleup:0":{pull:3,dips:2},"muscleup:2":{pull:4,dips:3},"flever:0":{pull:2,core:1},"flever:2":{row:3},
-  "planche:0":{pushup:1},"planche:2":{pushup:4,dips:2},"vpush:2":{pushup:2},"lsit:1":{dips:1},"core:2":{pull:2},"pull:5":{row:2},"legs:4":{core:1}};
-const missingFor=(f,i)=>Object.entries(GATES[f+":"+i]||{}).filter(([k,l])=>training.st[k].lvl<l).map(([k,l])=>({f:k,l}));
-const reqText=m=>m.map(x=>`« ${FAM[x.f].steps[x.l][0]} » (${FAM[x.f].n.toLowerCase()})`).join(" et ");
+/* Cross-branch prerequisites: {family: step} means "that step must be mastered" (a manual figure id: "ticked"). */
+const GATES={"pull:6":{lsit:1},"pull:8":{row:4},"row:5":{flever:0},"row:6":{flever:1},"row:7":{flever:3},
+  "muscleup:0":{pull:3,dips:2},"muscleup:2":{pull:5,dips:3},"muscleup:3":{dips:4},
+  "flever:0":{pull:2,core:0},"flever:1":{row:2},"flever:3":{row:5,core:2},"flever:4":{pull:5},
+  "blever:1":{skin:1},"blever:2":{row:2},"blever:4":{dips:3},
+  "planche:0":{pushup:1},"planche:2":{pushup:3,dips:2},"planche:3":{pushup:5},"planche:4":{dips:4},"pushup:8":{planche:2},
+  "hs:0":{vpush:0},"hs:2":{lsit:0},"vpush:3":{hs:1},"vpush:6":{hs:3},"lsit:1":{dips:0},"lsit:4":{core:1},
+  "core:2":{pull:3},"core:4":{lsit:0},"flag:0":{pull:4,vpush:1,core:1},"flag:2":{hs:1},"post:2":{legs:1},"dips:5":{pushup:3}};
+function stepMastered(f,l){const st=training.st[f];if(!st)return false;return st.lvl>l||(st.lvl===l&&!!st.done&&l===FAM[f].steps.length-1)}
+const missingFor=(f,i)=>Object.entries(GATES[f+":"+i]||{}).filter(([k,l])=>FAM[k]?!stepMastered(k,l):!(training.manual||{})[k]).map(([k,l])=>({f:k,l}));
+const stepLabel=(f,l)=>FAM[f].steps[l][4]||FAM[f].steps[l][0];
+const reqText=m=>m.map(x=>FAM[x.f]?`« ${stepLabel(x.f,x.l)} »`:`« ${SKM[x.f].n} »`).join(" et ");
 const famLocked=f=>missingFor(f,training.st[f].lvl).length>0;
-const RANKS=[[0,"Débutant du parc"],[300,"Habitué des barres"],[800,"Athlète de rue"],[1600,"Calisthénicien"],[2800,"Maître des barres"],[4500,"Légende du street workout"]];
-function xpTotal(){let x=0;for(const f in FAM){for(let i=0;i<training.st[f].lvl;i++)x+=(i+1)*50}return x+10*training.sessions.length+200*Object.keys(training.manual||{}).length}
+let RANKS=[];
+const xpOf=x=>Math.round(40+x.t*35+(x.m?60:0));
+function xpTotal(){return SK.filter(skLearned).reduce((a,x)=>a+xpOf(x),0)+10*training.sessions.length}
 function rankOf(x){let r=0;RANKS.forEach((k,i)=>{if(x>=k[0])r=i});return r}
 /* Sport profile: goal, rhythm, level tests, equipment, known figures. The weekly program is generated
    from it; with a target figure, the families on the unlearned path to that figure lead every session. */
 const GOALS={fig:["Débloquer une figure","Tes séances suivent le chemin de l'arbre jusqu'à ta figure."],force:["Gagner en force","Les exercices de base en priorité, repos plus longs."],muscle:["Prendre du muscle","Une série de plus par exercice."],forme:["Me remettre en forme","Séances équilibrées, 3 séries maximum."]};
-const TARGETS=["mu","smu","fl","bl","flag","hs","hspufree","strpl","fullpl","pistol","lsit","vsit","oap","oapu","p90"];
-const KNOWN=["pull10","dip15","skin","tuckfl","hswall","hs","lsit","pistol","frog","tuckbl","mu","bl","flag"];
-const SUPPORT={skin:["pull","core"],tuckbl:["pull","row"],bl:["row","pull"],hswall:["vpush"],hs:["vpush","lsit"],hspufree:["vpush"],flag:["pull","vpush","core"],vsit:["lsit","core"],oapu:["pushup"],oap:["pull"],p90:["planche","vpush"],fullpl:["planche"]};
+const TARGETS=["muscleup:2","muscleup:3","flever:4","blever:5","flag:3","hs:3","vpush:4","vpush:6","planche:4","planche:6","legs:4","post:4","lsit:3","lsit:5","core:5","pull:11","pushup:7","p90","manna","oahs"];
+const KNOWN=["pull:3","pull:4","dips:3","skin","flever:0","blever:1","hs:0","hs:3","lsit:3","legs:4","planche:1","muscleup:2","flag:3","pushup:7"];
+const SUPPORT={skin:["pull","core"],manna:["lsit","core"],oahs:["hs"],p90:["planche","vpush","hs"]};
 const TESTS=[["pull","Combien de tractions strictes d'affilée ?",["0","1 à 4","5 à 9","10 à 14","15 et +"]],["dips","Combien de dips aux barres parallèles ?",["0","1 à 4","5 à 9","10 à 14","15 et +"]],["push","Combien de pompes d'affilée ?",["Moins de 5","5 à 14","15 à 24","25 à 39","40 et +"]],["legs","Ton exercice de jambes le plus dur ?",["Squats","Fentes bulgares","Squat crevette","Pistol assisté","Pistol squat"]]];
-function defaultProf(){return{goal:"fig",target:"mu",days:3,wd:[0,2,4],dur:60,bars:true,skills:true,tests:{pull:2,dips:2,push:2,legs:1},known:[]}}
+function defaultProf(){return{goal:"fig",target:"muscleup:2",days:3,wd:[0,2,4],dur:60,bars:true,skills:true,tests:{pull:2,dips:2,push:2,legs:1},known:[]}}
 function prof(){if(!training.prof){const st=training.setup||{};training.prof={...defaultProf(),goal:"force",days:st.days||3,skills:st.skills!==false}}return training.prof}
 function pathTo(id){const out=[],seen=new Set();const go=i=>{if(seen.has(i))return;seen.add(i);const x=SKM[i];if(skLearned(x))return;out.push(i);x.r.forEach(go)};go(id);return out}
 function allAnc(id,acc=new Set([id])){SKM[id].r.forEach(r=>{if(!acc.has(r)){acc.add(r);allAnc(r,acc)}});return acc}
@@ -1468,20 +1565,31 @@ function goalFams(){const P=prof();if(P.goal!=="fig"||!SKM[P.target])return[];co
   pathTo(P.target).forEach(i=>{const x=SKM[i];(x.l?[x.l[0]]:(SUPPORT[i]||[])).forEach(f=>cnt[f]=(cnt[f]||0)+(x.l?2:1))});
   return Object.keys(cnt).filter(f=>!famLocked(f)&&(P.bars||f!=="dips")).sort((a,b)=>cnt[b]-cnt[a])}
 function practiceItems(){const P=prof();if(P.goal!=="fig"||!SKM[P.target])return[];return pathTo(P.target).map(i=>SKM[i]).filter(x=>x.m&&skState(x)==="open")}
-const CAT=f=>["pull","row","muscleup","flever"].includes(f)?"tirage":["dips","pushup","vpush","planche"].includes(f)?"poussée":f==="legs"?"jambes":"gainage";
+const SKILLF=["flever","planche","hs","muscleup","blever","flag"],PULLF=["pull","row"],PUSHF=["dips","vpush","pushup"],LEGF=["legs","post"],COREF=["core","lsit"];
+const ROLE=f=>SKILLF.includes(f)?"skill":COREF.includes(f)?"core":"str";
+const CAT=f=>["pull","row","muscleup","flever","blever","flag"].includes(f)?"tirage":["dips","pushup","vpush","planche","hs"].includes(f)?"poussée":LEGF.includes(f)?"jambes":"gainage";
+/* Session structure used by coaches: skills first while fresh, then strength in antagonist supersets
+   (pull + push), legs, then core. Exercises on the path to the goal figure get priority in each slot. */
 function getProgram(){
-  const P=prof(),n=+P.days,per={30:3,45:4,60:5,90:6}[P.dur]||5,g=goalFams();
-  const BAL=[["pull","dips","legs","core"],["row","pushup","vpush","lsit"],["pull","pushup","legs","core"],["dips","row","vpush","lsit"],["pull","dips","legs","lsit"]];
+  const P=prof(),n=+P.days||3,g=goalFams();
+  let [nS,nT,nC]={30:[1,2,0],45:[1,3,1],60:[2,3,1],90:[2,5,1]}[P.dur]||[2,3,1];
+  const skillsOn=P.goal==="fig"||(P.skills&&P.goal!=="forme");
+  const ok=f=>!famLocked(f)&&(P.bars||f!=="dips");
+  const order=(list,k)=>{const pref=g.filter(f=>list.includes(f)&&ok(f)),rest=list.filter(f=>ok(f)&&!pref.includes(f));const r=rest.length?k%rest.length:0;return[...pref,...rest.slice(r),...rest.slice(0,r)]};
   const out=[];
   for(let k=0;k<n;k++){
-    let fs=[];
-    if(g.length){fs.push(g[0]);if(g.length>1)fs.push(g[1+k%(g.length-1)])}
-    if(P.goal!=="fig"&&P.skills&&P.goal!=="forme")fs.push(["flever","planche","muscleup"][k%3]);
-    fs.push(...BAL[k%BAL.length]);
-    fs=[...new Set(fs)].filter(f=>!famLocked(f)&&(P.bars||f!=="dips")&&(P.goal==="fig"||P.skills||!FAM[f].skill));
-    if(!P.bars&&!fs.includes("pushup"))fs.splice(1,0,"pushup");
-    for(const f of ["row","pushup","legs","core","vpush","lsit","pull","dips"]){if(fs.length>=per)break;if(!fs.includes(f)&&!famLocked(f)&&(P.bars||f!=="dips"))fs.push(f)}
-    fs=fs.slice(0,per);
+    // Balance skills: one pulling figure and one pushing figure (alternating when only one fits).
+    const sp=skillsOn?order(["flever","muscleup","blever","flag"],k):[],sq=skillsOn?order(["planche","hs"],k):[];
+    const gFirst=g.find(f=>SKILLF.includes(f)&&(sp.includes(f)||sq.includes(f)));
+    let skills=nS>=2?[sp[0],sq[0]]:nS===1?[k%2?(sq[0]||sp[0]):(sp[0]||sq[0])]:[];
+    if(gFirst&&!skills.includes(gFirst))skills[0]=gFirst;
+    skills=[...new Set(skills.filter(Boolean))];
+    let t=nT+(nS-skills.length>0&&nS>1?1:0);
+    const pulls=order(PULLF,k),pushes=order(PUSHF,k),legs=order(LEGF,k);
+    const seq=[pulls[0],pushes[0],legs[0],pulls[1],pushes[1]].filter(Boolean);
+    const strength=[];for(const f of seq){if(strength.length>=t)break;if(!strength.includes(f))strength.push(f)}
+    const core=nC?order(COREF,k).slice(0,1):[];
+    const fs=[...new Set([...skills,...strength,...core])];
     const cats=[...new Set(fs.map(CAT))].slice(0,2).join(" et ");
     out.push({key:"S"+k,n:`Séance ${"ABCDE"[k]} · ${P.goal==="fig"&&SKM[P.target]?SKM[P.target].n:cats.charAt(0).toUpperCase()+cats.slice(1)}`,f:fs});
   }
@@ -1491,23 +1599,47 @@ function tplOf(k){const p=getProgram();return p.find(x=>x.key===k)||p[0]}
 function famsOf(tk){return tplOf(tk).f}
 function nextTplKey(){const p=getProgram();return p[training.next%p.length].key}
 function comeback(){const s=training.sessions;return s.length&&daysSince(s[s.length-1].d)>=14}
+function tempoOf(f,step){
+  const F=FAM[f],nm=step[0].toLowerCase();
+  if(/négati/.test(nm))return "Descente lente 4 à 5 s, remonte avec les pieds ou en sautant.";
+  if(F.kind==="hold")return "Tiens la meilleure position possible ; coupe la série dès que la forme casse (bras qui plient, bassin qui tombe).";
+  if(f==="muscleup")return "Qualité avant quantité : chaque répétition propre, repose-toi 20 s entre deux si besoin (séries en cluster).";
+  if(ROLE(f)==="core")return "Contrôle total, pas d'élan, 2 s à la descente.";
+  return "Descente 2 s, montée explosive. Arrête à 1 ou 2 rép. de l'échec sur les premières séries.";
+}
 function prescribe(tk,feel){
-  const light=training.deloadLeft>0||comeback();
-  return famsOf(tk).map((f,i)=>{
-    const F=FAM[f],st=training.st[f],step=F.steps[st.lvl];
-    let sets=F.kind==="hold"?4:(i===0?4:3);const P=prof();
-    if(P.goal==="muscle"&&F.kind!=="hold")sets++;
+  const light=training.deloadLeft>0||comeback(),P=prof(),fams=famsOf(tk),gf=goalFams();
+  const strF=fams.filter(f=>ROLE(f)==="str");
+  return fams.map(f=>{
+    const F=FAM[f],st=training.st[f],step=F.steps[st.lvl],role=ROLE(f),hold=F.kind==="hold";
+    let sets=role==="skill"?(hold?(step[2]<=8?6:step[2]<=15?5:4):5):role==="core"?3:(strF.indexOf(f)<2?4:3);
+    if(P.goal==="muscle"&&role==="str")sets++;
     if(P.goal==="forme")sets=Math.min(sets,3);
-    if(P.goal==="fig"&&goalFams().slice(0,2).includes(f))sets=Math.max(sets,4);
+    if(P.goal==="fig"&&gf.slice(0,2).includes(f))sets=Math.max(sets,4);
     if(feel==="tired")sets--;
     if(light)sets=Math.round(sets*.6);
     sets=Math.max(2,sets);
     const t=st.target||[],tg=[];
     for(let k=0;k<sets;k++){const v=light?step[1]:(t[k]??t[t.length-1]??step[1]);tg.push(Math.min(step[2],Math.max(step[1],v)))}
-    const rest=(F.kind==="hold"?90:step[2]<=8?150:90)+(P.goal==="force"?30:P.goal==="forme"?-15:0);
-    return{f,lvl:st.lvl,target:tg,sets:tg.slice(),rir:null,rest,load:st.load||"none"};
+    let rest=role==="skill"?(hold?120:150):role==="core"?75:step[2]<=6?180:step[2]<=10?120:90;
+    if(P.goal==="force"&&role==="str")rest+=30;
+    if(P.goal==="forme")rest=Math.max(60,rest-30);
+    const si=strF.indexOf(f),pair=si>=0&&!(strF.length%2&&si===strF.length-1)?"ABC"[Math.floor(si/2)]+(si%2+1):null;
+    return{f,lvl:st.lvl,target:tg,sets:tg.slice(),rir:null,rest,load:st.load||"none",role,pair,tempo:tempoOf(f,step),tip:TIPS[f+":"+st.lvl]||""};
   });
 }
+const BLOCKS={skill:["Bloc 1 · Figures","En premier, quand tu es frais : la qualité compte plus que le nombre."],str:["Bloc 2 · Force","En superset : enchaîne A1 puis A2, repos entre les tours."],core:["Bloc 3 · Gainage","Pour finir, contrôle et amplitude."]};
+function finisher(fams){
+  const L=[],has=a=>fams.some(f=>a.includes(f));
+  if(has(["pull","row","muscleup","flever","blever","flag"]))L.push("Extensions de poignet à l'élastique ou avec une bouteille, 2 × 15 : protège les coudes, très sollicités à la barre.","Rotations externes d'épaule à l'élastique, 2 × 15.");
+  if(has(["planche","hs","vpush","pushup","dips"]))L.push("Renforcement des poignets : appuis paumes levées et pompes sur les doigts, 2 × 10.","Face pulls à l'élastique, 2 × 15 : équilibre le travail de poussée.");
+  if(has(LEGF))L.push("Montées sur la pointe d'un pied, 2 × 12 par côté.");
+  const S=["Suspension passive à la barre, 30 s (dorsaux, décompression)","Étirement des pectoraux contre un mur, 30 s par côté","Fente basse, 30 s par côté (fléchisseurs de hanche)"];
+  if(has(["lsit","core","flever","planche"]))S.push("Pike assis jambes tendues, 45 s : la souplesse des ischios limite souvent le L-sit et le V-sit");
+  return{prehab:L.slice(0,3),stretch:S};
+}
+function finisherHtml(fams,open){const fz=finisher(fams);return `<details class="nut warm" ${open?"open":""}><summary>Retour au calme · 8 min</summary><div style="padding:0 16px 14px"><p class="k muted">Prévention des blessures</p><ul class="warmlist" style="padding:4px 0 8px 20px">${fz.prehab.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p class="k muted">Étirements</p><ul class="warmlist" style="padding:4px 0 0 20px">${fz.stretch.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></details>`}
+function weekVolume(){const v={tirage:0,"poussée":0,jambes:0,gainage:0};getProgram().forEach(x=>prescribe(x.key,"ok").forEach(e=>v[CAT(e.f)]+=e.target.length));return v}
 function adapt(e,light){
   const F=FAM[e.f],st=training.st[e.f],[,lo,hi]=F.steps[e.lvl],r=e.sets.map(x=>+x||0),rir=e.rir??1,u=unitOf(e.f);
   const inc=F.kind==="hold"?2:1;
@@ -1519,7 +1651,7 @@ function adapt(e,light){
     const kg=kgOf(ld)+2.5;st.load=kgKey(kg);return{t:"up",msg:`Toutes tes séries à ${hi} ${u} lesté : passe à +${n1(kg)} kg.`}}
   if(allTop&&rir>=1){
     if(st.lvl<F.steps.length-1&&missingFor(e.f,st.lvl+1).length){st.target=r.map(()=>hi);st.fails=0;const ns=F.steps[st.lvl+1];
-      return{t:"=",msg:`Étape maîtrisée ! « ${ns[0]} » est verrouillée : atteins d'abord ${reqText(missingFor(e.f,st.lvl+1))}. En attendant, garde le maximum.`}}
+      return{t:"=",msg:`Étape maîtrisée ! « ${ns[0]} » est verrouillée : maîtrise d'abord ${reqText(missingFor(e.f,st.lvl+1))}. En attendant, garde le maximum.`}}
     if(st.lvl<F.steps.length-1){st.lvl++;st.target=[];st.fails=0;const ns=F.steps[st.lvl];(training.unlocks=training.unlocks||[]).push({f:e.f,i:st.lvl,d:isoDay(new Date())});return{t:"up",unlock:ns[0],msg:`Toutes tes séries à ${hi} ${u} : passe à « ${ns[0]} » (${ns[1]} à ${ns[2]} ${u}${sideOf(ns)}).`}}
     const was=st.done;st.done=true;st.target=r.map(()=>hi);if(!was)(training.unlocks=training.unlocks||[]).push({f:e.f,i:st.lvl,d:isoDay(new Date())});return{t:"up",unlock:was?null:F.steps[st.lvl][0],msg:"Dernière étape maîtrisée : ajoute un lest léger (2 à 5 kg) ou ralentis la descente à 4 s."};
   }
@@ -1574,9 +1706,9 @@ function spark(f){
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progression ${up?"en hausse":"en baisse"} sur les ${pts.length} dernières séances"><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xy[xy.length-1][0]}" cy="${xy[xy.length-1][1]}" r="3.5" fill="var(--accent)"/></svg>`;
 }
 const chip=(attr,val,label,on)=>`<button class="chip" data-sp="${attr}" data-arg="${val}" aria-pressed="${!!on}">${label}</button>`;
-function exPreviewRow(e){
-  const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f);
-  return `<div class="exrow"><span class="exn"><b>${esc(st[0])}</b><small>${F.n} · étape ${e.lvl+1} sur ${F.steps.length}</small></span>
+function exPreviewRow(e,i,all){
+  const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f),prev=all&&i>0?all[i-1].role:null,head=all&&e.role&&e.role!==prev?`<p class="blk">${BLOCKS[e.role][0]}</p>`:"";
+  return `${head}<div class="exrow"><span class="exn"><b>${e.pair?`<span class="pairtag">${e.pair}</span> `:""}${esc(st[0])}</b><small>${F.n} · étape ${e.lvl+1} sur ${F.steps.length}</small></span>
     <span class="exp">${e.target.length} × ${st[1]}–${st[2]} ${u}<small>vise ${e.target.join(", ")}${sideOf(st)}${loadNote(e.load)}</small></span></div>`;
 }
 function renderSport(){
@@ -1604,7 +1736,8 @@ function renderSport(){
      <div class="chips">${Object.entries(FEEL).map(([k,l])=>chip("feel",k,l,spFeel===k)).join("")}</div>
      ${spFeelAuto&&spFeel==="tired"?`<p class="note"><b>Préréglé d'après ta nuit</b> (${n1(jGet(isoDay(new Date())).sh)} h).</p>`:""}
      ${spFeel==="tired"?`<p class="note">Une série de moins par exercice aujourd'hui : on garde l'intensité, on réduit le volume.</p>`:""}
-     <div class="exlist">${ex.map(exPreviewRow).join("")}</div>
+     <div class="exlist">${ex.map((e,i,a)=>exPreviewRow(e,i,a)).join("")}</div>
+     ${volumeHtml()}
      <button class="btn primary block" data-sp="go" data-arg="${tk}">Commencer la séance</button>
    </div>
    ${lc?`<div class="box"><h3>Après ta séance du ${new Date(lc.d+"T12:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</h3>
@@ -1628,10 +1761,12 @@ function renderSession(v){
   v.innerHTML=`<div class="hello"><p class="eyebrow">En cours · ${c.light?"séance allégée":FEEL[c.feel]}</p><h1>${esc(c.tn||tplOf(c.tpl).n)}</h1></div>
    <details class="nut warm" open><summary>Échauffement · environ 8 min</summary><ol class="warmlist">${warmup(c.ex.map(e=>e.f)).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>
    ${practiceItems().length?`<div class="welcome"><h3>Pratique de figure (10 min en début de séance)</h3>${practiceItems().map(x=>`<p><b>${esc(x.n)}</b> : ${esc(x.tip)}</p>`).join("")}</div>`:""}
-   ${c.ex.map((e,ei)=>{const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f);return `<article class="card ex">
-     <div class="exhead"><span class="exn"><small>${F.n} · étape ${e.lvl+1} sur ${F.steps.length}</small><b>${esc(st[0])}</b></span>
+   ${c.ex.map((e,ei)=>{const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f),role=e.role||ROLE(e.f),newBlk=ei===0||(c.ex[ei-1].role||ROLE(c.ex[ei-1].f))!==role;return `${newBlk?`<div class="blkhead"><h3>${BLOCKS[role][0]}</h3><p class="note">${BLOCKS[role][1]}</p></div>`:""}<article class="card ex">
+     <div class="exhead"><span class="exn"><small>${e.pair?`<span class="pairtag">${e.pair}</span> `:""}${F.n} · étape ${e.lvl+1} sur ${F.steps.length}</small><b>${esc(st[0])}</b></span>
        <span class="lvbtn"><button class="btn sm ghost" data-sp="elv-" data-arg="${ei}" ${e.lvl===0?"disabled":""}>Plus facile</button><button class="btn sm ghost" data-sp="elv+" data-arg="${ei}" ${e.lvl===F.steps.length-1?"disabled":""}>Plus dur</button></span></div>
      <p class="note">${esc(F.cue)}</p>
+     ${e.tip||TIPS[e.f+":"+e.lvl]?`<p class="tipline"><b>Conseil :</b> ${esc(e.tip||TIPS[e.f+":"+e.lvl])}</p>`:""}
+     <p class="tempo"><b>Exécution :</b> ${esc(e.tempo||tempoOf(e.f,st))}</p>
      <label class="f loadsel">Aide ou charge<select data-spload="${ei}" aria-label="Élastique ou lest">${Object.entries(LOADS).map(([k,l])=>`<option value="${k}" ${k===(e.load||"none")?"selected":""}>${l}</option>`).join("")}</select></label>
      <p><b>${e.sets.length} × ${st[1]}–${st[2]} ${u}${sideOf(st)}${loadNote(e.load)}</b> <span class="muted">· repos ${e.rest>=120?Math.floor(e.rest/60)+" min "+(e.rest%60?e.rest%60:""):e.rest+" s"}</span></p>
      <div class="sets">${e.sets.map((x,si)=>`<div class="setrow"><span>Série ${si+1}<small>objectif ${e.target[si]??e.target[e.target.length-1]}</small></span>
@@ -1640,6 +1775,7 @@ function renderSession(v){
      <p class="k muted">À la dernière série, il t'en restait combien ?</p>
      <div class="chips">${RIR_OPTS.map(([k,l])=>`<button class="chip" data-sp="rir" data-arg="${ei}-${k}" aria-pressed="${e.rir===k}">${l}</button>`).join("")}</div>
    </article>`}).join("")}
+   ${finisherHtml(c.ex.map(e=>e.f),false)}
    <button class="btn primary block" data-sp="finish">Terminer et enregistrer</button>
    <button class="btn ghost block" data-sp="abort">Abandonner la séance</button>`;
 }
@@ -1665,7 +1801,7 @@ function wizHtml(){
   let body="";
   if(w.step===0){
     body=`<div class="goals">${Object.entries(GOALS).map(([k,[n,sub]])=>`<button class="goalbtn" data-sp="wg" data-arg="${k}" aria-pressed="${d.goal===k}"><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
-     ${d.goal==="fig"?`<h3>Quelle figure veux-tu débloquer ?</h3><div class="tgrid">${TARGETS.map(id=>{const x=SKM[id],st=training?skState(x):"lock";return `<button class="tbtn" data-sp="wt" data-arg="${id}" aria-pressed="${d.target===id}"><span class="sk sm s-${st==="lock"?"open":st}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[st==="lock"?"open":st]}</svg></span><span>${esc(x.n)}<small>palier ${x.t+1} sur 8</small></span></button>`}).join("")}</div>`:""}`;
+     ${d.goal==="fig"?`<h3>Quelle figure veux-tu débloquer ?</h3><div class="tgrid">${TARGETS.map(id=>{const x=SKM[id],st=training?skState(x):"lock";return `<button class="tbtn" data-sp="wt" data-arg="${id}" aria-pressed="${d.target===id}"><span class="sk sm s-${st==="lock"?"open":st}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[st==="lock"?"open":st]}</svg></span><span>${esc(x.n)}<small>${lvlName(x.t)}</small></span></button>`}).join("")}</div>`:""}`;
   }else if(w.step===1){
     if(!Array.isArray(d.wd)||!d.wd.length)d.wd=DEFAULT_WD[d.days]||DEFAULT_WD[3];
     body=`<h3>Quels jours tu t'entraînes ?</h3><div class="chips wrap">${DAYS.map((n,i)=>chip("wday",i,n.slice(0,3),d.wd.includes(i))).join("")}</div>
@@ -1697,9 +1833,9 @@ function applyWizard2(){
   if(!training)training={st:{},sessions:[],next:0,deloadLeft:0,cur:null,lastChanges:null,manual:{}};
   training.manual=training.manual||{};training.prof=d;training.next=0;
   if(!w.edit||!w.keep){
-    const L={pull:[0,1,2,3,4][T.pull],row:[0,1,2,3,3][T.pull],core:[0,0,1,1,2][T.pull],dips:[0,1,2,3,4][T.dips],lsit:[0,0,1,1,2][T.dips],
-      pushup:[0,1,2,3,4][T.push],vpush:[0,0,1,1,2][T.push],planche:[0,0,0,1,1][T.push],legs:T.legs,flever:0,muscleup:0};
-    Object.keys(FAM).forEach(f=>training.st[f]={lvl:L[f],target:[],fails:0});
+    const L={pull:[1,2,3,4,5][T.pull],row:[0,1,2,4,4][T.pull],core:[0,0,1,1,2][T.pull],dips:[0,1,2,3,4][T.dips],lsit:[0,0,1,1,2][T.dips],
+      pushup:[0,1,2,4,5][T.push],vpush:[0,0,1,1,3][T.push],planche:[0,0,0,1,1][T.push],legs:T.legs,post:[0,0,1,2,2][T.legs]};
+    Object.keys(FAM).forEach(f=>training.st[f]={lvl:L[f]??0,target:[],fails:0});
   }
   d.known.forEach(markLearned);
   if(d.creatine!=null){profile.creatine=!!d.creatine;saveProfile()}
@@ -1707,71 +1843,23 @@ function applyWizard2(){
   toast(first?"Programme créé. Bonne séance !":"Programme mis à jour.");
 }
 
-const COLS=["Back lever","Tractions","Muscle-up","Front lever","Abdos","Jambes","HSPU","Équilibre","Dips","Planche","Pompes"];
-const SK=[
- {id:"row0",n:"Rowing australien",t:0,c:1,l:["pull",0],r:[]},
- {id:"hollow",n:"Hollow body",t:0,c:4,l:["lsit",0],r:[]},
- {id:"sq",n:"Squats",t:0,c:5,l:["legs",0],r:[]},
- {id:"benchdip",n:"Dips sur banc",t:0,c:8,l:["dips",0],r:[]},
- {id:"pu",n:"Pompes",t:0,c:10,l:["pushup",1],r:[]},
- {id:"rowlegs",n:"Rowing jambes tendues",t:1,c:0,l:["row",1],r:["row0"]},
- {id:"neg",n:"Tractions négatives",t:1,c:1,l:["pull",1],r:["row0"]},
- {id:"knees",n:"Relevés de genoux",t:1,c:4,l:["core",0],r:["hollow"]},
- {id:"bulg",n:"Fentes bulgares",t:1,c:5,l:["legs",1],r:["sq"]},
- {id:"pike",n:"Pompes pike",t:1,c:6,l:["vpush",0],r:["pu"]},
- {id:"negdip",n:"Dips négatifs",t:1,c:8,l:["dips",1],r:["benchdip"]},
- {id:"lean",n:"Planche lean",t:1,c:9,l:["planche",0],r:["pu"]},
- {id:"diamond",n:"Pompes diamant",t:1,c:10,l:["pushup",2],r:["pu"]},
- {id:"rowfeet",n:"Rowing pieds surélevés",t:2,c:0,l:["row",2],r:["rowlegs"]},
- {id:"pullup",n:"Tractions",t:2,c:1,l:["pull",2],r:["neg"]},
- {id:"legr",n:"Relevés de jambes",t:2,c:4,l:["core",1],r:["knees"]},
- {id:"shrimp",n:"Squat crevette",t:2,c:5,l:["legs",2],r:["bulg"]},
- {id:"pikeel",n:"Pike pieds surélevés",t:2,c:6,l:["vpush",1],r:["pike"]},
- {id:"dip",n:"Dips aux barres",t:2,c:8,l:["dips",2],r:["negdip"]},
- {id:"frog",n:"Frog stand",t:2,c:9,l:["planche",1],r:["lean"]},
- {id:"archerpu",n:"Pompes archer",t:2,c:10,l:["pushup",3],r:["diamond"]},
- {id:"skin",n:"Skin the cat",t:3,c:0,m:1,r:["pullup","knees"],tip:"Suspendu, passe les jambes entre les bras et descends lentement en rotation d'épaules, puis remonte. 3 × 3 à 5, en contrôle."},
- {id:"pull10",n:"10 tractions",t:3,c:1,l:["pull",3],r:["pullup"]},
- {id:"tuckfl",n:"Tuck front lever",t:3,c:3,l:["flever",0],r:["pullup","legr"]},
- {id:"tucklsit",n:"Tuck L-sit",t:3,c:4,l:["lsit",1],r:["legr","negdip"]},
- {id:"pistolb",n:"Pistol sur banc",t:3,c:5,l:["legs",3],r:["shrimp"]},
- {id:"hswall",n:"Équilibre au mur 30 s",t:3,c:7,m:1,r:["pikeel"],tip:"Ventre face au mur, mains à 10 cm du mur, corps aligné. 4 × 20 à 45 s ; vise 30 s propres plusieurs fois."},
- {id:"dip15",n:"15 dips",t:3,c:8,l:["dips",3],r:["dip"]},
- {id:"pseudo",n:"Pompes pseudo-planche",t:3,c:10,l:["pushup",4],r:["archerpu"]},
- {id:"tuckbl",n:"Tuck back lever",t:4,c:0,m:1,r:["skin"],tip:"Depuis le skin the cat, tiens la position genoux groupés dos à l'horizontale. 4 × 8 à 15 s."},
- {id:"explo",n:"Tractions explosives",t:4,c:1,l:["pull",4],r:["pull10"]},
- {id:"highpull",n:"Tractions hautes",t:4,c:2,l:["muscleup",0],r:["pull10","dip"]},
- {id:"advfl",n:"Advanced tuck FL",t:4,c:3,l:["flever",1],r:["tuckfl"]},
- {id:"ttb",n:"Toes to bar",t:4,c:4,l:["core",2],r:["legr","pullup"]},
- {id:"pistol",n:"Pistol squat",t:4,c:5,l:["legs",4],r:["pistolb"]},
- {id:"hsneg",n:"HSPU négatifs",t:4,c:6,l:["vpush",2],r:["pikeel","hswall"]},
- {id:"hs",n:"Handstand libre",t:4,c:7,m:1,r:["hswall"],tip:"Kick-up contre rien, gainage serré, corrige avec les doigts. 10 min de pratique, essais courts ; vise 10 s, puis 30 s."},
- {id:"sbdip",n:"Dips barre droite",t:4,c:8,l:["dips",4],r:["dip15"]},
- {id:"tuckpl",n:"Tuck planche",t:4,c:9,l:["planche",2],r:["frog","pseudo","dip"]},
- {id:"oapuinc",n:"Pompe à un bras inclinée",t:4,c:10,l:["pushup",5],r:["pseudo"]},
- {id:"bl",n:"Back lever",t:5,c:0,m:1,r:["tuckbl"],tip:"Progresse : tuck → advanced tuck → une jambe → straddle → complet. 4 × 5 à 10 s à chaque étape."},
- {id:"archerpull",n:"Tractions archer",t:5,c:1,l:["pull",5],r:["explo","rowfeet"]},
- {id:"muneg",n:"Muscle-up négatif",t:5,c:2,l:["muscleup",1],r:["highpull","explo"]},
- {id:"olfl",n:"Front lever une jambe",t:5,c:3,l:["flever",2],r:["advfl","rowfeet"]},
- {id:"lsit",n:"L-sit",t:5,c:4,l:["lsit",3],r:["tucklsit"]},
- {id:"hspu",n:"HSPU au mur",t:5,c:6,l:["vpush",3],r:["hsneg"]},
- {id:"advpl",n:"Advanced tuck planche",t:5,c:9,l:["planche",3],r:["tuckpl"]},
- {id:"oapu",n:"Pompe à un bras",t:5,c:10,m:1,r:["oapuinc"],tip:"Pieds écartés, coude près du corps, hanches face au sol. 3 × 3 à 5 par bras."},
- {id:"flag",n:"Drapeau humain",t:6,c:0,m:1,r:["explo","hswall"],tip:"Sur une barre verticale : bras du haut tire, bras du bas pousse. Commence en tuck, 5 × 5 à 10 s."},
- {id:"onenegp",n:"Traction 1 bras négative",t:6,c:1,l:["pull",6],r:["archerpull"]},
- {id:"mu",n:"Muscle-up",t:6,c:2,l:["muscleup",2],r:["muneg","sbdip"]},
- {id:"strfl",n:"Straddle front lever",t:6,c:3,l:["flever",3],r:["olfl"]},
- {id:"vsit",n:"V-sit",t:6,c:4,m:1,r:["lsit"],tip:"Depuis le L-sit, pousse les épaules loin du sol et monte les jambes. 5 × 5 à 10 s."},
- {id:"hspufree",n:"HSPU libre",t:6,c:7,m:1,r:["hs","hspu"],tip:"Handstand stable 30 s et HSPU au mur maîtrisés d'abord. Négatifs libres, 4 × 2 à 3."},
- {id:"strpl",n:"Straddle planche",t:6,c:9,l:["planche",4],r:["advpl"]},
- {id:"oap",n:"Traction à un bras",t:7,c:1,m:1,r:["onenegp"],tip:"Négatifs à un bras de 5 s, puis tractions assistées par l'autre main sur une serviette. 5 × 1 à 2 par bras."},
- {id:"smu",n:"Muscle-up strict",t:7,c:2,l:["muscleup",3],r:["mu"]},
- {id:"fl",n:"Front lever",t:7,c:3,l:["flever",4],r:["strfl"]},
- {id:"p90",n:"Pompe à 90°",t:7,c:8,m:1,r:["hspufree","strpl"],tip:"Figure d'élite : planche et HSPU libre solides d'abord. Négatifs de la poirier jusqu'à la planche."},
- {id:"fullpl",n:"Planche complète",t:7,c:9,m:1,r:["strpl"],tip:"Depuis le straddle, rapproche progressivement les jambes. 5 × 3 à 6 s."},
-];
+const COLS=["Back lever","Drapeau","Tractions","Tirage","Muscle-up","Front lever","Abdos","L-sit · V-sit","Jambes","Ischios","Handstand","HSPU","Dips","Planche","Pompes"];
+const FCOL={blever:0,flag:1,pull:2,row:3,muscleup:4,flever:5,core:6,lsit:7,legs:8,post:9,hs:10,vpush:11,dips:12,planche:13,pushup:14};
+const BRANCH={tirage:[0,1,2,3,4,5],gainage:[6,7],jambes:[8,9],poussee:[10,11,12,13,14]};
+const SK=[];
+Object.keys(FAM).forEach(f=>{const F=FAM[f],n=F.steps.length,[a,b]=F.tr;F.steps.forEach((st,i)=>{const r=i?[f+":"+(i-1)]:[];
+  Object.entries(GATES[f+":"+i]||{}).forEach(([k,l])=>r.push(FAM[k]?k+":"+l:k));
+  SK.push({id:f+":"+i,n:st[4]||st[0],full:st[0],t:+(a+(n>1?i*(b-a)/(n-1):0)).toFixed(2),c:FCOL[f],l:[f,i],r})})});
+SK.push(
+ {id:"skin",n:"Skin the cat",t:3,c:1,m:1,r:["pull:2","core:0"],tip:"Suspendu, passe les jambes entre les bras et descends lentement en rotation d'épaules, puis remonte. 3 × 3 à 5, très contrôlé : c'est la porte d'entrée du back lever."},
+ {id:"manna",n:"Manna",t:8.6,c:7,m:1,r:["lsit:5"],tip:"Mains derrière les fesses, épaules en extension maximale, jambes au-dessus de l'horizontale. Figure d'élite : des années de V-sit et de souplesse des épaules."},
+ {id:"oahs",n:"Handstand à un bras",t:8.6,c:10,m:1,r:["hs:5"],tip:"Depuis un handstand straddle stable 60 s, décale le poids sur une main en gardant l'autre au sol du bout des doigts, puis décolle-la."},
+ {id:"p90",n:"Pompe à 90°",t:9.4,c:12,m:1,r:["vpush:6","planche:4"],tip:"Du handstand, descends en pompe jusqu'à la planche (corps à l'horizontale), puis remonte. Planche straddle et HSPU libre solides d'abord."}
+);
+const lvlName=t=>t<2?"Débutant":t<4?"Intermédiaire":t<6?"Confirmé":t<8?"Avancé":"Élite";
 const SKM={};SK.forEach(x=>SKM[x.id]=x);
-function skLearned(x){if(x.m)return !!(training.manual||{})[x.id];const st=training.st[x.l[0]];return st.lvl>x.l[1]||(st.lvl===x.l[1]&&!!st.done&&x.l[1]===FAM[x.l[0]].steps.length-1)}
+{const tot=SK.reduce((a,x)=>a+xpOf(x),0);RANKS=[[0,"Débutant du parc"],[.05,"Habitué des barres"],[.12,"Athlète de rue"],[.25,"Calisthénicien"],[.42,"Maître des barres"],[.65,"Légende du street workout"]].map(([f,n])=>[Math.round(f*tot/50)*50,n])}
+function skLearned(x){return x.m?!!(training.manual||{})[x.id]:stepMastered(x.l[0],x.l[1])}
 function skState(x){
   if(skLearned(x))return"done";
   if(!x.m&&training.st[x.l[0]].lvl===x.l[1]&&!famLocked(x.l[0]))return"cur";
@@ -1783,14 +1871,17 @@ const SK_ICON={
  cur:'<path d="M3 9v6M6.5 6.5v11M17.5 6.5v11M21 9v6M6.5 12h11"/>',
  open:'<path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>',
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'};
-const CW=96,RH=124,PADX=20,PADT=30,PADB=64;
+const CW=100,RH=136,PADX=34,PADT=30,PADB=64;let treeFilter="all";
 function treeHtml(){
   const xp=xpTotal(),rk=rankOf(xp),nx=RANKS[rk+1],base=RANKS[rk][0];
-  const tiers=Math.max(...SK.map(x=>x.t))+1,W=PADX*2+COLS.length*CW,H=PADT+PADB+(tiers-1)*RH+60;
-  const pos=x=>({x:PADX+x.c*CW+CW/2,y:H-PADB-x.t*RH-28});
+  const cols=treeFilter==="all"?COLS.map((_,i)=>i):BRANCH[treeFilter],ci={};cols.forEach((c,i)=>ci[c]=i);
+  const VIS=SK.filter(x=>x.c in ci),maxT=Math.max(...SK.map(x=>x.t)),W=PADX*2+cols.length*CW,H=PADT+PADB+maxT*RH+60;
+  const pos=x=>({x:PADX+ci[x.c]*CW+CW/2,y:H-PADB-x.t*RH-28});
   const st={};SK.forEach(x=>st[x.id]=skState(x));
   const cnt=k=>SK.filter(x=>st[x.id]===k).length;
-  const edges=SK.flatMap(x=>x.r.map(id=>{const a=pos(SKM[id]),b=pos(x),cls=st[id]==="done"?(st[x.id]==="done"?"e-done":"e-open"):"e-lock";
+  const yT=t=>H-PADB-t*RH;
+  const bands=[[0,2,"Débutant"],[2,4,"Intermédiaire"],[4,6,"Confirmé"],[6,8,"Avancé"],[8,maxT+.6,"Élite"]].map(([a,b,n],i)=>`<div class="lvband ${i%2?"alt":""}" style="top:${yT(b-.5)}px;height:${(b-a)*RH}px"><span>${n}</span></div>`).join("");
+  const edges=VIS.flatMap(x=>x.r.filter(id=>SKM[id].c in ci).map(id=>{const a=pos(SKM[id]),b=pos(x),cls=st[id]==="done"?(st[x.id]==="done"?"e-done":"e-open"):"e-lock";
     const y1=a.y-30,y2=b.y+30,my=(y1+y2)/2;return `<path class="${cls}${SKM[id].c!==x.c?" x":""}" d="M${a.x} ${y1} C${a.x} ${my},${b.x} ${my},${b.x} ${y2}"/>`}));
   edges.sort((p,q)=>(p.includes("e-lock")?0:1)-(q.includes("e-lock")?0:1));
   const ready=SK.filter(x=>st[x.id]==="open"||st[x.id]==="cur");
@@ -1799,15 +1890,17 @@ function treeHtml(){
      <div class="bar"><i class="sun" style="width:${nx?Math.min(100,(xp-base)/(nx[0]-base)*100):100}%"></i></div>
      <p class="note">${nx?`Encore ${n0(nx[0]-xp)} XP pour « ${nx[1]} ».`:"Rang maximum atteint."} ${cnt("done")} figures acquises sur ${SK.length}.</p></div>
    <div class="legend">${["done","cur","open","lock"].map(k=>`<span class="lg"><span class="sk s-${k}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[k]}</svg></span>${SK_TXT[k]} <b>${cnt(k)}</b></span>`).join("")}</div>
+   <div class="chips" role="group" aria-label="Branche">${[["all","Tout l'arbre"],["tirage","Tirage et leviers"],["poussee","Poussée et équilibre"],["gainage","Gainage"],["jambes","Jambes"]].map(([k,l])=>`<button class="chip" data-treef="${k}" aria-pressed="${treeFilter===k}">${l}</button>`).join("")}</div>
    <div class="treewrap" id="treewrap" tabindex="0" aria-label="Arbre des figures, faire défiler dans les deux sens">
      <div class="treecanvas" style="width:${W}px;height:${H}px">
+       ${bands}
        <svg class="edges" width="${W}" height="${H}" aria-hidden="true">${edges.join("")}</svg>
-       ${COLS.map((n,i)=>`<span class="colname" style="left:${PADX+i*CW}px;width:${CW}px;top:${H-PADB+8}px">${n}</span>`).join("")}
-       ${SK.map(x=>{const p=pos(x),s=st[x.id];return `<button class="sknode" data-sp="skn" data-arg="${x.id}" style="left:${p.x-CW/2}px;top:${p.y-28}px;width:${CW}px" aria-label="${esc(x.n)} : ${SK_TXT[s]}">
-         <span class="sk s-${s}${x.m?" fig":""}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${SK_ICON[s]}</svg></span><span class="skn">${esc(x.n)}</span></button>`}).join("")}
+       ${cols.map((c,i)=>`<span class="colname" style="left:${PADX+i*CW}px;width:${CW}px;top:${H-PADB+8}px">${COLS[c]}</span>`).join("")}
+       ${VIS.map(x=>{const p=pos(x),s=st[x.id];return `<button class="sknode" data-sp="skn" data-arg="${x.id}" style="left:${p.x-CW/2}px;top:${p.y-28}px;width:${CW}px" aria-label="${esc(x.n)} : ${SK_TXT[s]}">
+         <span class="sk s-${s}${x.m?" fig":""}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${SK_ICON[s]}</svg></span><span class="skn">${esc(x.n)}</span>${x.m?"":`<span class="skx">${FAM[x.l[0]].steps[x.l[1]][1]}–${FAM[x.l[0]].steps[x.l[1]][2]} ${unitOf(x.l[0])}</span>`}</button>`}).join("")}
      </div>
    </div>
-   <p class="note">Les racines sont en bas, les figures légendaires en haut. Fais défiler l'arbre dans les deux sens. Les figures entourées en doré se cochent à la main ; les autres avancent toutes seules avec tes séances.</p>
+   <p class="note">${SK.length} figures sur 5 niveaux, des bases (en bas) à l'élite (en haut). Chaque branche suit les progressions d'<i>Overcoming Gravity</i> (Steven Low) ; les traits entre branches sont des prérequis, par exemple 3 × 8 tractions et 3 × 10 dips avant de travailler le muscle-up. Les figures entourées en doré se cochent à la main ; les autres avancent toutes seules avec tes séances.</p>
    ${ready.length?`<div class="box"><h3>À ta portée</h3><ul class="unlocks">${ready.map(x=>`<li><span class="sk s-${st[x.id]} sm"><svg class="i" viewBox="0 0 24 24">${SK_ICON[st[x.id]]}</svg></span><span><button class="linkbtn" data-sp="skn" data-arg="${x.id}">${esc(x.n)}</button><small>${SK_TXT[st[x.id]]}${x.m?" · figure à cocher":""}</small></span></li>`).join("")}</ul></div>`:""}`;
 }
 function focusTree(){
@@ -1819,21 +1912,46 @@ function focusTree(){
 }
 function openSkill(id){
   const x=SKM[id],s=skState(x);
-  const reqs=x.r.map(r=>{const ok=skLearned(SKM[r]);return `<li class="${ok?"ok":""}">${ok?"✓":"✗"} ${esc(SKM[r].n)}</li>`}).join("");
+  const reqs=x.r.map(r=>{const ok=skLearned(SKM[r]);return `<li class="${ok?"ok":""}">${ok?"✓":"✗"} ${esc(SKM[r].n)} <span class="muted">(${SKM[r].m?"figure":FAM[SKM[r].l[0]].n.toLowerCase()})</span></li>`}).join("");
   const next=SK.filter(y=>y.r.includes(id));
-  let how="";
-  if(!x.m){const F=FAM[x.l[0]],step=F.steps[x.l[1]],lv=training.st[x.l[0]].lvl,u=unitOf(x.l[0]);
-    how=s==="done"?`Acquise : tu as dépassé cette étape (${F.n.toLowerCase()}).`
-      :s==="cur"?`C'est ton étape actuelle en ${F.n.toLowerCase()} : ${step[1]} à ${step[2]} ${u}${sideOf(step)}. Elle est acquise quand toutes tes séries atteignent ${step[2]} avec au moins 1 rép. en réserve.`
-      :lv<x.l[1]?`Elle viendra dans tes séances quand tu auras franchi les étapes précédentes de la branche ${F.n.toLowerCase()} (tu es à l'étape ${lv+1} sur ${F.steps.length}).`:"";
-  }
-  openSheet(null,`<p class="eyebrow muted">${COLS[x.c]} · palier ${x.t+1}</p><h2>${esc(x.n)}</h2>
-    <div class="facts"><span class="fact p">${SK_TXT[s]}</span>${x.m?`<span class="fact">+200 XP</span>`:`<span class="fact">${FAM[x.l[0]].steps[x.l[1]][1]} à ${FAM[x.l[0]].steps[x.l[1]][2]} ${unitOf(x.l[0])}</span>`}</div>
-    ${x.r.length?`<div class="box"><h3>Prérequis</h3><ul class="reqs">${reqs}</ul></div>`:`<div class="box"><p>Figure de base : c'est une racine de l'arbre.</p></div>`}
-    <div class="box">${x.m?`<p>${esc(x.tip)}</p><p class="note">Cette figure ne fait pas partie de tes séances automatiques : travaille-la en fin de séance et coche-la quand tu la tiens proprement.</p>`:`<p>${esc(how||FAM[x.l[0]].cue)}</p>`}</div>
-    ${next.length?`<div class="box"><h3>Ouvre la voie vers</h3><p>${next.map(y=>esc(y.n)).join(", ")}</p></div>`:""}
+  let body="";
+  if(x.m)body=`<p>${esc(x.tip)}</p><p class="note">Hors séances automatiques : travaille-la 10 min en début de séance quand tu es frais, et coche-la quand tu la tiens proprement.</p>`;
+  else{const[f,i]=x.l,F=FAM[f],step=F.steps[i],lv=training.st[f].lvl,u=unitOf(f),tip=TIPS[f+":"+i];
+    body=`<p><b>Validation :</b> ${F.kind==="hold"?`toutes tes séries tenues ${step[2]} s`:`toutes tes séries à ${step[2]} rép.`}${sideOf(step)}, avec au moins 1 rép. (ou quelques secondes) en réserve. L'appli te fait alors passer à l'étape suivante.</p>
+      ${tip?`<p><b>Conseil de coach :</b> ${esc(tip)}</p>`:""}<p class="note">${esc(F.cue)}</p>
+      <p class="note">${s==="done"?"Acquise.":s==="cur"?`C'est ton étape actuelle : ${step[1]} à ${step[2]} ${u}${sideOf(step)} par série.`:lv<i?`Tu es à l'étape ${lv+1} sur ${F.steps.length} de cette branche.`:""}</p>`}
+  openSheet(null,`<p class="eyebrow muted">${COLS[x.c]} · ${lvlName(x.t)}</p><h2>${esc(x.full||x.n)}</h2>
+    <div class="facts"><span class="fact p">${SK_TXT[s]}</span><span class="fact">+${xpOf(x)} XP</span>${x.m?"":`<span class="fact">${FAM[x.l[0]].steps[x.l[1]][1]} à ${FAM[x.l[0]].steps[x.l[1]][2]} ${unitOf(x.l[0])}</span>`}</div>
+    ${x.r.length?`<div class="box"><h3>Prérequis à maîtriser</h3><ul class="reqs">${reqs}</ul></div>`:`<div class="box"><p>Figure de base : c'est une racine de l'arbre.</p></div>`}
+    <div class="box">${body}</div>
+    ${next.length?`<div class="box"><h3>Ouvre la voie vers</h3><p>${next.map(y=>`<button class="linkbtn" data-sp="skn" data-arg="${y.id}">${esc(y.n)}</button>`).join(" · ")}</p></div>`:""}
     ${s!=="done"&&!(prof().goal==="fig"&&prof().target===id)?`<button class="btn primary block" data-sp="settarget" data-arg="${id}">En faire mon objectif</button>`:prof().goal==="fig"&&prof().target===id?`<p class="note"><b>C'est ton objectif actuel.</b></p>`:""}
-    ${x.m&&s==="done"?`<button class="btn ghost block" data-sp="skman" data-arg="${id}">Retirer de mes figures acquises</button>`:x.m&&s==="open"?`<button class="btn primary block" data-sp="skman" data-arg="${id}">Je maîtrise cette figure</button>`:x.m?`<p class="note">Valide d'abord les prérequis pour pouvoir la cocher.</p>`:""}`,x.n);
+    ${x.m&&s==="done"?`<button class="btn ghost block" data-sp="skman" data-arg="${id}">Retirer de mes figures acquises</button>`:x.m&&s==="open"?`<button class="btn primary block" data-sp="skman" data-arg="${id}">Je maîtrise cette figure</button>`:x.m?`<p class="note">Valide d'abord les prérequis pour pouvoir la cocher.</p>`:""}`,x.full||x.n);
+}
+function volumeHtml(){const v=weekVolume();return `<details class="nut"><summary>Volume de ta semaine</summary>${Object.entries(v).map(([k,n])=>`<div class="nrow">${pill(k==="gainage"?(n>=6?"g":"m"):n>=10&&n<=22?"g":n<10?"m":"b")}<span class="lbl">${cap1(k)}<small>${k==="gainage"?"repère : 6 séries ou plus":"repère : 10 à 20 séries par semaine"}</small></span><span class="val">${n} séries</span></div>`).join("")}<p class="note" style="padding:0 16px 12px">Repère courant en musculation : 10 à 20 séries difficiles par groupe musculaire et par semaine pour progresser. Les figures (front lever, planche…) comptent dans leur groupe.</p></details>`}
+/* Migrate saved progress from the first ladders (schema 1) to the expanded ones (schema 2). */
+const OLDMAP={pull:[1,2,3,4,5,8,9],row:[0,1,2,4,5],pushup:[0,1,2,4,5,6],vpush:[0,1,3,4]};
+const OLDLEN={pull:7,row:5,dips:5,pushup:6,vpush:4,legs:5,core:4,lsit:4,flever:5,planche:5,muscleup:4};
+const OLDID={mu:"muscleup:2",smu:"muscleup:3",fl:"flever:4",bl:"blever:5",flag:"flag:3",hs:"hs:3",hspufree:"vpush:6",strpl:"planche:4",fullpl:"planche:6",pistol:"legs:4",lsit:"lsit:3",vsit:"lsit:5",oap:"pull:11",oapu:"pushup:7",p90:"p90",pull10:"pull:4",dip15:"dips:3",skin:"skin",tuckfl:"flever:0",hswall:"hs:0",frog:"planche:1",tuckbl:"blever:1"};
+function migrateTraining(){
+  if(!training)return;
+  training.st=training.st||{};
+  if((training.schema||1)<2){
+    const mp=(f,l)=>OLDMAP[f]?(OLDMAP[f][l]??l):l;
+    Object.entries(training.st).forEach(([f,st])=>{if(!FAM[f])return;const old=st.lvl,wasDone=st.done&&old===OLDLEN[f]-1;
+      st.lvl=Math.min(FAM[f].steps.length-1,mp(f,old));st.target=[];
+      if(wasDone){if(st.lvl<FAM[f].steps.length-1){st.lvl++;st.done=false}else st.done=true}});
+    (training.sessions||[]).forEach(x=>(x.ex||[]).forEach(e=>{e.lvl=mp(e.f,e.lvl)}));
+    if(training.cur)training.cur.ex.forEach(e=>{e.lvl=mp(e.f,e.lvl)});
+    (training.unlocks||[]).forEach(u=>{u.i=mp(u.f,u.i)});
+    const P=training.prof;if(P){if(OLDID[P.target])P.target=OLDID[P.target];P.known=(P.known||[]).map(k=>OLDID[k]||k).filter(k=>SKM[k])}
+    const M=training.manual||{},conv={hswall:"hs:0",hs:"hs:3",hspufree:"vpush:6",tuckbl:"blever:1",bl:"blever:5",flag:"flag:3",vsit:"lsit:4",oapu:"pushup:7",oap:"pull:11",fullpl:"planche:6"};
+    Object.entries(conv).forEach(([k,id])=>{if(M[k]){delete M[k];const[f,l]=id.split(":");training.st[f]=training.st[f]||{lvl:0,target:[],fails:0};const st=training.st[f];
+      if(+l>=FAM[f].steps.length-1){st.lvl=+l;st.done=true}else if(st.lvl<=+l)st.lvl=+l+1}});
+    training.manual=M;training.schema=2;
+  }
+  Object.keys(FAM).forEach(f=>{if(!training.st[f])training.st[f]={lvl:0,target:[],fails:0}});
+  if(training.prof&&!SKM[training.prof.target])training.prof.target="muscleup:2";
 }
 function startRest(sec){
   restEnd=Date.now()+sec*1000;clearInterval(restTimer);
@@ -1876,7 +1994,7 @@ document.addEventListener("click",e=>{
   else if(a==="rest")startRest(+g);
   else if(a==="finish")finishSession();
   else if(a==="abort"){if(t.dataset.armed){training.cur=null;stopRest();saveTraining();renderSport()}else{t.dataset.armed="1";t.textContent="Appuie encore pour abandonner sans enregistrer"}}
-  else if(a==="lv+"&&missingFor(g,training.st[g].lvl+1).length){toast("Verrouillé : atteins d'abord "+reqText(missingFor(g,training.st[g].lvl+1)).replace(/« |»/g,""))}
+  else if(a==="lv+"&&missingFor(g,training.st[g].lvl+1).length){toast("Verrouillé : maîtrise d'abord "+reqText(missingFor(g,training.st[g].lvl+1)).replace(/« |»/g,""))}
   else if(a==="view"){spView=g;closeSheet();renderSport();window.scrollTo(0,0)}
   else if(a==="skn")openSkill(g);
   else if(a==="skman"){training.manual=training.manual||{};const had=!!training.manual[g];if(had)delete training.manual[g];else training.manual[g]=isoDay(new Date());saveTraining();closeSheet();renderSport();toast(had?"Figure retirée.":`${SKM[g].n} acquise ! +200 XP`)}
@@ -1913,7 +2031,7 @@ async function initCloud(){
       if(d.profile){profile={...DEFAULT,...d.profile};profile.crous={...DEFAULT_CROUS,...(d.profile.crous||{})};exampleMode=false;try{localStorage.setItem("pp_profile",JSON.stringify(profile))}catch(_){}}
       if(d.banned)banned=new Set(d.banned);if(d.seed!=null)seed=d.seed;if(d.checked)checked=new Set(d.checked);if(d.prices)prices=JSON.parse(JSON.stringify(d.prices));if(d.crousOv)crousOv=JSON.parse(JSON.stringify(d.crousOv));if(d.journal)journal=JSON.parse(JSON.stringify(d.journal));if(d.outOv)outOv=JSON.parse(JSON.stringify(d.outOv));if(d.ingOv){ingOv=JSON.parse(JSON.stringify(d.ingOv));applyIngOv()}
     }
-    if(t.exists&&t.data().training!==undefined)training=JSON.parse(JSON.stringify(t.data().training));
+    if(t.exists&&t.data().training!==undefined){training=JSON.parse(JSON.stringify(t.data().training));migrateTraining()}
     cloudReady=true;
     if(!a.exists)dirty.add("app");if(!t.exists&&training)dirty.add("training");
     if(dirty.size)flushCloud();else setSync("ok");
@@ -2058,9 +2176,9 @@ function openTest(){
 function levelFromTest(t){
   const b=v=>v==null?null:v>=15?4:v>=10?3:v>=5?2:v>=1?1:0,pb=v=>v==null?null:v>=40?4:v>=25?3:v>=15?2:v>=5?1:0;
   const out={};const P=b(t.pull),D=b(t.dips),U=pb(t.push);
-  if(P!=null){out.pull=[0,1,2,3,4][P];out.row=[0,1,2,3,3][P]}
+  if(P!=null){out.pull=[1,2,3,4,5][P];out.row=[0,1,2,4,4][P]}
   if(D!=null)out.dips=[0,1,2,3,4][D];
-  if(U!=null)out.pushup=[0,1,2,3,4][U];
+  if(U!=null)out.pushup=[0,1,2,4,5][U];
   return Object.entries(out).filter(([f,l])=>l>training.st[f].lvl);
 }
 
@@ -2077,7 +2195,8 @@ function warmup(fams){
   const cats=new Set(fams.map(CAT)),list=[...WARM.base];
   if(cats.has("tirage"))list.push(...WARM.tirage);
   if(cats.has("poussée"))list.push(...WARM.poussée);
-  if(fams.some(f=>["planche","vpush","lsit"].includes(f)))list.push(...WARM.poignets);
+  if(fams.some(f=>["planche","vpush","lsit","hs","pushup"].includes(f)))list.push(...WARM.poignets);
+  if(fams.some(f=>["blever","flever","muscleup"].includes(f)))list.push("Skin the cat ou German hang en douceur, 2 × 5 s : prépare les épaules aux leviers");
   if(cats.has("jambes"))list.push(...WARM.jambes);
   if(cats.has("gainage"))list.push(...WARM.gainage);
   const f0=fams[0],st0=FAM[f0].steps[Math.max(0,training.st[f0].lvl-1)][0];
@@ -2314,7 +2433,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-29-7";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-30-1";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -2401,6 +2520,7 @@ async function coachAsk(q){
   delete live.live;coachOnText=null;coachBusy=false;clearInterval(coachTick);rerenderCoach();
 }
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
+  if(d.treef){treeFilter=d.treef;renderSport();return}
   if("coach" in d)openCoach();
   else if(d.coachtab){coachTab=d.coachtab;rerenderCoach()}
   else if(d.coachq)coachAsk(d.coachq);
@@ -2554,7 +2674,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 /* Ask the browser to keep this site's storage (reduces the risk of automatic clean-up). */
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
-applyIngOv();buildCrousFields();fillForm();applyWizard();refresh();renderSport();initCloud();renderAccount();sbChip();if(SB&&sbSession)sbPull(false);
+migrateTraining();saveTraining();applyIngOv();buildCrousFields();fillForm();applyWizard();refresh();renderSport();initCloud();renderAccount();sbChip();if(SB&&sbSession)sbPull(false);
 </script>
 
 <script>
