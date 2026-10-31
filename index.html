@@ -397,6 +397,47 @@ body.onboarding .wrap{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px)
 .wlfeat li{background:var(--surface);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);display:grid;gap:2px}
 .wlfeat span{color:var(--muted);font-size:.9rem}
 .wlback{justify-self:start}
+details.fold>.foldin{padding:0 16px 14px;display:grid;gap:8px}
+details.fold>.foldin .hrow:first-child,details.fold>.foldin .lvrow:first-child{border-top:0}
+.bubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
+.bub{position:relative;display:grid;justify-items:center;gap:2px;border:0;background:var(--surface);border-radius:20px;padding:12px 6px 10px;box-shadow:var(--shadow)}
+.bub.on{outline:3px solid var(--accent)}
+.ring2{width:58px;height:58px;transform:rotate(-90deg)}
+.ring2 .rt{fill:var(--surface2);stroke:var(--surface2);stroke-width:7}
+.ring2 .rv{fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round}
+.ring2 .rv.lock{stroke:var(--line)}
+.bubn{font-family:var(--f-display);font-weight:600;font-size:.92rem;margin-top:-40px;height:40px;display:grid;place-items:center;text-align:center;line-height:1.1;max-width:92px}
+.bub .bubn{margin-top:4px;height:auto}
+.bubc{font-size:.78rem;color:var(--muted);font-weight:700}
+.bubgoal{position:absolute;top:6px;right:10px;color:var(--sun);font-size:1rem}
+.tpanel{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:14px;display:grid;gap:12px}
+.fbubs{display:grid;gap:8px}
+.fbub{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:16px;padding:8px 12px}
+.fbub .ring2{width:44px;height:44px}
+.fbub small{display:block;color:var(--muted);font-size:.82rem}
+.fbub.on{border-color:var(--accent);background:var(--accent-soft)}
+.tpath{display:grid;gap:8px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;position:relative}
+.steps li{position:relative;padding-left:0}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:16px;top:42px;bottom:-6px;width:3px;background:var(--line);border-radius:2px}
+.steps li.st-done:not(:last-child)::after{background:var(--accent)}
+.steps button{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:6px 0;min-height:52px}
+.steps .stx small{display:block;color:var(--muted);font-size:.8rem}
+.steps .lvl{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.steps li.st-lock .stx b{color:var(--muted);font-weight:600}
+.rclist{display:grid;gap:8px}
+.rcrow{display:grid;grid-template-columns:28px 1fr;gap:8px;background:var(--surface);border-radius:14px;padding:10px;box-shadow:var(--shadow)}
+.rcrow.off{opacity:.55}
+.rcck input{width:22px;height:22px;accent-color:var(--accent)}
+.rcmain{display:grid;gap:6px;min-width:0}
+.rcmain select{min-height:40px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);padding:0 8px;max-width:100%}
+.rcin{display:inline-flex;align-items:center;gap:4px;font-size:.85rem}
+.rcin input{width:72px;min-height:36px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);padding:0 6px}
+.code{font-family:var(--f-display);letter-spacing:.12em}
+.av{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:.8rem;flex:none}
+.frrow{display:flex;gap:10px;align-items:center}
+.feed{display:grid;grid-template-columns:36px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.feed:first-of-type{border-top:0}.feed p{margin:0}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -636,6 +677,10 @@ I("blancoeuf","Blancs d'œufs liquides",3,[48,10.5,.7,.7,.2,0,0,.4,.1,7],0,.55,5
 I("biscuit","Petits-beurre",6,[440,7,74,23,12,7.5,2.5,.8,1.5,60],0,.70,200,"paquet 200 g");
 
 /* Recipes: grams for one base portion */
+/* 2026 average shelf prices (€/100 g) from Aldi, Lidl, Leclerc and Carrefour price surveys and Open Prices
+   (Open Food Facts) records. Your own receipts and price checks override them. */
+const EUR26={"poulet": 1.1, "cuisse": 0.8, "dinde": 0.85, "boeuf": 1.1, "jambon": 0.98, "colin": 0.72, "thon": 0.95, "sardine": 1.0, "maquereau": 0.75, "oeuf": 0.5, "skyr": 0.35, "fblanc": 0.19, "lait": 0.11, "yaourt": 0.13, "emmental": 0.75, "mozza": 0.65, "feta": 1.05, "cheddar": 1.0, "creme": 0.43, "tofu": 0.65, "lentille": 0.3, "corail": 0.45, "pcasse": 0.21, "pchiche": 0.23, "hrouge": 0.27, "hblanc": 0.18, "mais": 0.4, "tomconc": 0.18, "coco": 0.43, "riz": 0.12, "pates": 0.12, "semoule": 0.13, "boulgour": 0.22, "quinoa": 0.7, "avoine": 0.17, "pain": 0.3, "tortilla": 0.37, "farine": 0.07, "gnocchi": 0.25, "pita": 0.4, "chapelure": 0.19, "huile": 0.22, "soja": 1.08, "pdt": 0.12, "patate": 0.26, "oignon": 0.11, "carotte": 0.1, "tomate": 0.25, "courgette": 0.2, "poivron": 0.33, "champi": 0.36, "chou": 0.12, "concombre": 0.28, "banane": 0.15, "pomme": 0.18, "frouges": 0.52, "brocoli": 0.26, "hverts": 0.15, "epinard": 0.19, "ppois": 0.32, "chocnoir": 0.9, "cacao": 0.95, "pst": 0.52, "biscuit": 0.35, "miel": 0.9};
+Object.entries(EUR26).forEach(([k,v])=>{if(ING[k])ING[k].eur=v});
 const RECIPES=[
  // ----- Petit-déjeuner
  {id:"porridge",type:"matin",n:"Porridge skyr banane",i:[["avoine",80],["lait",250],["skyr",150],["banane",120]],s:["Cuire l'avoine dans le lait 4 min à feu doux en remuant.","Hors du feu, ajouter le skyr.","Couper la banane par-dessus."]},
@@ -1163,7 +1208,7 @@ function renderPlan(){
    <p class="note daylegend"><i class="lgd c"></i> CROUS <i class="lgd s"></i> Sport</p>
    ${daySportHtml(day,ws,rws)}
    <div class="meals">${dm.map(mealCard).join("")}</div>
-   <details class="nut" open><summary>Nutriments de la journée</summary>
+   <details class="nut"><summary>Nutriments de la journée</summary>
      ${nrow(dn.p>=T.prot*.93?"g":dn.p>=T.pmin?"m":"b","Protéines",`cible ${T.prot} g, seuil utile ${T.pmin} g`,`${n0(dn.p)} g`,`${n0(dn.p/T.prot*100)} %`,pctBar(dn.p,T.prot,"min"))}
      ${nrow(band(pctE("carb"),40,55),"Glucides","repère : 40 à 55 % de l'énergie",`${n0(dn.carb)} g`,`${n0(pctE("carb"))} %`)}
      ${nrow(dn.sug<=90?"g":dn.sug<=110?"m":"b","dont sucres","repère : 90 g au maximum",`${n0(dn.sug)} g`,`${n0(dn.sug/90*100)} %`,pctBar(dn.sug,90,"max"))}
@@ -1175,7 +1220,7 @@ function renderPlan(){
      ${nrow(dn.ca>=T.ca?"g":dn.ca>=T.ca*.7?"m":"b","Calcium",`référence : ${T.ca} mg`,`${n0(dn.ca)} mg`,`${n0(dn.ca/T.ca*100)} %`,pctBar(dn.ca,T.ca,"min"))}
    </details>
    <button class="btn block" id="regen">Proposer d'autres recettes cette semaine</button>
-   <p class="note">Protéines : cible de ${String(T.gkg).replace(".",",")} g par kg et par jour ; au-delà de 1,6 g/kg, le gain musculaire plafonne en moyenne (méta-analyse de Morton et al., 2018). Quand une journée est en dessous, le plan ajoute un complément riche en protéines à un repas et réduit la portion du plat d’autant. Énergie : formule de Mifflin-St Jeor × activité${profile.goal==="bulk"?", + 12 %":profile.goal==="cut"?", − 20 %":""}. Repères ANSES et OMS. Les repas CROUS sont estimés avec des portions de cantine type. Le fer des végétaux est moins bien absorbé que celui de la viande.</p>`;
+   <details class="nut fold"><summary>Comment c'est calculé</summary><div class="foldin"><p class="note">Protéines : cible de ${String(T.gkg).replace(".",",")} g par kg et par jour ; au-delà de 1,6 g/kg, le gain musculaire plafonne en moyenne (méta-analyse de Morton et al., 2018). Quand une journée est en dessous, le plan ajoute un complément riche en protéines à un repas et réduit la portion du plat d’autant. Énergie : formule de Mifflin-St Jeor × activité${profile.goal==="bulk"?", + 12 %":profile.goal==="cut"?", − 20 %":""}. Repères ANSES et OMS. Les repas CROUS sont estimés avec des portions de cantine type. Le fer des végétaux est moins bien absorbé que celui de la viande.</p></div></details>`;
 }
 
 function aggregate(){
@@ -1208,7 +1253,7 @@ function renderCourses(){
     <p class="muted">${left} produit${left>1?"s":""} à acheter${all.crousN?`. Tes ${all.crousN} repas au CROUS ne sont pas dans la liste.`:"."}</p>
     <div class="chips" role="group" aria-label="Classer la liste">
       <button class="chip" data-mode="rayon" aria-pressed="${courseMode==="rayon"}">Par rayon</button>
-      <button class="chip" data-mode="magasin" aria-pressed="${courseMode==="magasin"}">Par magasin</button><button class="chip" data-v="prix">Mes prix Lidl et Leclerc</button><button class="chip" data-scan>Scanner une étiquette</button></div>
+      <button class="chip" data-mode="magasin" aria-pressed="${courseMode==="magasin"}">Par magasin</button><button class="chip" data-v="prix">Mes prix Lidl et Leclerc</button><button class="chip" data-receipt>Scanner un ticket</button><button class="chip" data-scan>Scanner une étiquette</button></div>
     ${courseMode==="magasin"&&!known?`<div class="welcome"><p>Note quelques prix à ${st.map(s=>STORES[s].n).join(" ou ")} avec le bouton « Prix ». Chaque produit ira ensuite vers le magasin le moins cher.</p></div>`:""}
     <div class="list">${body}
      <div class="tot"><span>Consommé dans la semaine</span><span>${eur(est)}</span></div>
@@ -1229,8 +1274,9 @@ function renderPrix(){
     ${!st.length?`<div class="alert"><span>Aucun magasin choisi. Coche Lidl ou Leclerc dans ton profil.</span></div>`:""}
     <div class="plist">${ids.map(id=>{const x=ING[id],best=price(id);
       return `<button class="prow" data-price="${id}"><span><b>${esc(x.n)}</b>${used.has(id)?"":` <span class="tag">pas cette semaine</span>`}</span><span>${fmtKg(best.v,id)}</span>
-      <span class="meta">${st.map(s=>{const p=storePrice(id,s);return `<span>${STORES[s].n} : ${p==null?"pas relevé":(best.src===s?"<b>":"")+fmtKg(p,id)+(best.src===s?"</b>":"")}</span>`}).join("")}<span>Estimation : ${fmtKg(x.eur,id)}</span></span></button>`}).join("")}</div>
-    <button class="btn primary" data-scan>Scanner une étiquette</button>
+      <span class="meta">${st.map(s=>{const p=storePrice(id,s);return `<span>${STORES[s].n} : ${p==null?"pas relevé":(best.src===s?"<b>":"")+fmtKg(p,id)+(best.src===s?"</b>":"")}</span>`}).join("")}<span>Moyenne 2026 : ${fmtKg(x.eur,id)}</span>${st.map(s2=>prices[id]&&prices[id][s2]&&prices[id][s2].d?`<span>relevé le ${new Date(prices[id][s2].d+"T12:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</span>`:"").join("")}</span></button>`}).join("")}</div>
+    <button class="btn primary" data-receipt>Scanner un ticket de caisse</button>
+    <button class="btn" data-scan>Scanner une étiquette</button>
     <button class="btn ghost" id="resetPrices">Effacer tous mes prix</button>`;
 }
 const FILTERS=[["all","Toutes"],["g","Gourmandes"],["matin","Petit-déj"],["plat","Plats"],["collation","Snacks & desserts"],["fit","Pour moi"]];
@@ -1737,6 +1783,8 @@ function finishSession(){
     deloadMsg=`Deux de tes trois dernières séances ont été dures. Les ${training.deloadLeft} prochaines seront allégées (environ 40 % de séries en moins) pour récupérer, puis tu reprends la progression.`;
   }
   training.lastChanges={d:entry.d,items:changes,deload:deloadMsg};
+  {const nS=entry.ex.reduce((a,e)=>a+e.sets.length,0),up=changes.filter(x=>x.unlock).map(x=>x.unlock);
+   socialPost("street",`${entry.tn||"Séance de street workout"}`,{sub:`${entry.ex.length} exercices · ${nS} séries${up.length?" · nouveau palier : "+up.join(", "):""}`})}
   training.cur=null;stopRest();saveTraining();renderSport();renderPlan();window.scrollTo(0,0);
   const newFams=lockedBefore.filter(f=>!famLocked(f)),ups=changes.filter(x=>x.unlock),xp=xpTotal(),rk=rankOf(xp);
   if(ups.length||newFams.length||rk>rankBefore){
@@ -1760,6 +1808,8 @@ function spark(f){
   const up=pts[pts.length-1]>=pts[0];
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progression ${up?"en hausse":"en baisse"} sur les ${pts.length} dernières séances"><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xy[xy.length-1][0]}" cy="${xy[xy.length-1][1]}" r="3.5" fill="var(--accent)"/></svg>`;
 }
+function viewChips(){const L=spSport==="street"&&training?[["prog","Programme"],["tree","Arbre"],["stats","Progrès"]]:[["prog","Mon plan"]];if(SB)L.push(["friends","Amis"]);
+  return L.length>1?`<div class="chips" role="group" aria-label="Vue">${L.map(([k,l])=>chip("view",k,l,spView===k||(k==="prog"&&!L.some(x=>x[0]===spView)))).join("")}</div>`:""}
 const chip=(attr,val,label,on)=>`<button class="chip" data-sp="${attr}" data-arg="${val}" aria-pressed="${!!on}">${label}</button>`;
 function exPreviewRow(e,i,all){
   const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f),prev=all&&i>0?all[i-1].role:null,head=all&&e.role&&e.role!==prev?`<p class="blk">${BLOCKS[e.role][0]}</p>`:"";
@@ -1772,12 +1822,13 @@ function renderSport(){
   if(!S.length){v.innerHTML=`<div class="hello"><h1>Sport</h1></div><div class="welcome"><p>Tu n'as pas choisi de sport. Active le street workout ou la course à pied dans ton profil pour avoir un programme adapté.</p><button class="btn primary sm" data-v="profil">Mon profil</button></div>`;return}
   if(!spSport||!S.includes(spSport))spSport=S[0];
   const ssw=S.length>1?`<div class="chips sporttabs" role="group" aria-label="Sport">${S.map(k=>`<button class="chip" data-sport="${k}" aria-pressed="${spSport===k}">${k==="run"?"Course à pied":"Street workout"}</button>`).join("")}</div>`:"";
-  if(spSport==="run"){renderRun(v,`<div class="hello"><p class="eyebrow">Course à pied</p><h1>${S.length>1?"Sport":"Course"}</h1></div>`+ssw);return}
+  if(spView==="friends"&&!training?.cur){v.innerHTML=`<div class="hello"><p class="eyebrow">Communauté</p><h1>Amis</h1></div>`+ssw+viewChips()+friendsHtml();foldBoxes(v,["Confidentialité"]);return}
+  if(spSport==="run"){renderRun(v,`<div class="hello"><p class="eyebrow">Course à pied</p><h1>${S.length>1?"Sport":"Course"}</h1></div>`+ssw+viewChips());return}
   const head=`<div class="hello"><p class="eyebrow">Street workout</p><h1>Sport</h1></div>`+ssw;
   if(!training||spWiz){v.innerHTML=(spWiz?"":ssw)+wizHtml();return}
   if(training.cur)return renderSession(v);
-  const sw=`<div class="chips" role="group" aria-label="Vue">${chip("view","prog","Mon programme",spView!=="tree")}${chip("view","tree","Arbre",spView==="tree")}${chip("view","stats","Progrès",spView==="stats")}</div>`;
-  if(spView==="tree"){v.innerHTML=head+sw+treeHtml();requestAnimationFrame(focusTree);return}
+  const sw=viewChips();
+  if(spView==="tree"){v.innerHTML=head+sw+treeHtml();if(treeMode==="map")requestAnimationFrame(focusTree);return}
   if(spView==="stats"){v.innerHTML=head+sw+progressHtml();return}
   {const jt=jGet(isoDay(new Date()));if(!spFeelTouched&&jt.sh&&(jt.sh<6||jt.sq===1)){spFeel="tired";spFeelAuto=true}}
   const P=prof(),prog=getProgram(),tk=spTpl&&prog.some(x=>x.key===spTpl)?spTpl:nextTplKey(),ex=prescribe(tk,spFeel),wk=weekCount(),goal=+P.days,hint=activityHint(),lc=training.lastChanges;
@@ -1816,6 +1867,8 @@ function renderSport(){
      <button class="btn primary block" data-sp="wedit">Modifier mon profil sport</button>
      <button class="btn sm ghost" data-sp="reset">Tout recommencer</button></div>
    <p class="note">Méthode : double progression dans une fourchette de répétitions, ajustée selon les répétitions en réserve (échelle RIR). La fatigue fait baisser le nombre de séries, pas la difficulté. Repos de 2 à 3 min sur les exercices de force, 90 s ailleurs. Ces règles suivent les recommandations courantes en musculation et ne remplacent pas un avis médical en cas de douleur.</p>`;
+  const meth=[...v.querySelectorAll(":scope > p.note")].pop();if(meth&&/^Méthode/.test(meth.textContent)){const b=document.createElement("div");b.className="box";b.innerHTML="<h3>La méthode</h3>";meth.replaceWith(b);b.appendChild(meth)}
+  foldBoxes(v,["Après ta séance","Dans ton agenda","Tes niveaux","Historique","Réglages","La méthode"]);
 }
 function renderSession(v){
   const c=training.cur;
@@ -1960,7 +2013,8 @@ function treeHtml(){
      <div class="row" style="justify-content:space-between;align-items:flex-end"><span><span class="k muted">Rang ${rk+1} sur ${RANKS.length}</span><h2>${RANKS[rk][1]}</h2></span><b class="xp">${n0(xp)} XP</b></div>
      <div class="bar"><i class="sun" style="width:${nx?Math.min(100,(xp-base)/(nx[0]-base)*100):100}%"></i></div>
      <p class="note">${nx?`Encore ${n0(nx[0]-xp)} XP pour « ${nx[1]} ».`:"Rang maximum atteint."} ${cnt("done")} figures acquises sur ${SK.length}.</p></div>
-   <div class="legend">${["done","cur","open","lock"].map(k=>`<span class="lg"><span class="sk s-${k}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[k]}</svg></span>${SK_TXT[k]} <b>${cnt(k)}</b></span>`).join("")}</div>
+   <div class="chips" role="group" aria-label="Affichage">${[["bubbles","Par branches"],["map","Carte complète"]].map(([k,l])=>`<button class="chip" data-tmode="${k}" aria-pressed="${treeMode===k}">${l}</button>`).join("")}</div>
+   ${treeMode==="map"?`   <div class="legend">${["done","cur","open","lock"].map(k=>`<span class="lg"><span class="sk s-${k}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[k]}</svg></span>${SK_TXT[k]} <b>${cnt(k)}</b></span>`).join("")}</div>
    <div class="chips" role="group" aria-label="Branche">${[["all","Tout l'arbre"],["tirage","Tirage et leviers"],["poussee","Poussée et équilibre"],["transitions","Transitions"],["gainage","Gainage"],["jambes","Jambes"]].map(([k,l])=>`<button class="chip" data-treef="${k}" aria-pressed="${treeFilter===k}">${l}</button>`).join("")}</div>
    <div class="treewrap" id="treewrap" tabindex="0" aria-label="Arbre des figures, faire défiler dans les deux sens">
      <div class="treecanvas" style="width:${W}px;height:${H}px">
@@ -1971,13 +2025,13 @@ function treeHtml(){
          <span class="sk s-${s}${x.m?" fig":""}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${SK_ICON[s]}</svg></span><span class="skn">${esc(x.n)}</span>${x.m?"":`<span class="skx">${FAM[x.l[0]].steps[x.l[1]][1]}–${FAM[x.l[0]].steps[x.l[1]][2]} ${unitOf(x.l[0])}</span>`}</button>`}).join("")}
      </div>
    </div>
-   <p class="note">${SK.length} figures sur 5 niveaux, des bases (en bas) à l'élite (en haut). Chaque branche suit les progressions d'<i>Overcoming Gravity</i> (Steven Low) ; les traits entre branches sont des prérequis, par exemple 3 × 8 tractions et 3 × 10 dips avant de travailler le muscle-up. Les figures entourées en doré se cochent à la main ; les autres avancent toutes seules avec tes séances.</p>
+   <p class="note">${SK.length} figures sur 5 niveaux, des bases (en bas) à l'élite (en haut). Chaque branche suit les progressions d'<i>Overcoming Gravity</i> (Steven Low) ; les traits entre branches sont des prérequis, par exemple 3 × 8 tractions et 3 × 10 dips avant de travailler le muscle-up. Les figures entourées en doré se cochent à la main ; les autres avancent toutes seules avec tes séances.</p>`:treeBubbles()}
    <details class="nut"><summary>Comment débloquer une figure ?</summary><div style="padding:0 16px 14px"><ol class="warmlist" style="padding:4px 0 0 20px">
      <li><b>En séance :</b> quand toutes tes séries atteignent le haut de la fourchette (par exemple 3 × 8 pour « 4 à 8 rép. ») avec au moins 1 rép. en réserve, l'étape est validée et tu passes à la suivante.</li>
      <li><b>Par le test de force</b> (vue Progrès) : tes maximums valident directement les étapes correspondantes, prérequis compris.</li>
      <li><b>À la main :</b> dans la fiche d'une figure, « Je la maîtrise déjà ». Les figures entourées en doré (transitions, skin the cat…) ne sont pas dans les séances : tu les coches quand tu les tiens.</li>
      <li><b>Prérequis :</b> une figure reste verrouillée tant que ses prérequis, les traits qui arrivent par le bas, ne sont pas validés.</li></ol></div></details>
-   ${ready.length?`<div class="box"><h3>À ta portée</h3><ul class="unlocks">${ready.map(x=>`<li><span class="sk s-${st[x.id]} sm"><svg class="i" viewBox="0 0 24 24">${SK_ICON[st[x.id]]}</svg></span><span><button class="linkbtn" data-sp="skn" data-arg="${x.id}">${esc(x.n)}</button><small>${SK_TXT[st[x.id]]}${x.m?" · figure à cocher":""}</small></span></li>`).join("")}</ul></div>`:""}`;
+   ${ready.length&&treeMode==="map"?`<div class="box"><h3>À ta portée</h3><ul class="unlocks">${ready.map(x=>`<li><span class="sk s-${st[x.id]} sm"><svg class="i" viewBox="0 0 24 24">${SK_ICON[st[x.id]]}</svg></span><span><button class="linkbtn" data-sp="skn" data-arg="${x.id}">${esc(x.n)}</button><small>${SK_TXT[st[x.id]]}${x.m?" · figure à cocher":""}</small></span></li>`).join("")}</ul></div>`:""}`;
 }
 function focusTree(){
   const w=document.getElementById("treewrap");if(!w)return;
@@ -2079,7 +2133,7 @@ document.addEventListener("click",e=>{
   else if(a==="view"){spView=g;closeSheet();renderSport();window.scrollTo(0,0)}
   else if(a==="skn")openSkill(g);
   else if(a==="skmaster"){const c=closureIds([g]);markLearned(g);saveTraining();closeSheet();renderSport();toast(`${c.length} étape${c.length>1?"s":""} validée${c.length>1?"s":""} dans ton arbre.`)}
-  else if(a==="skman"){training.manual=training.manual||{};const had=!!training.manual[g];if(had)delete training.manual[g];else training.manual[g]=isoDay(new Date());saveTraining();closeSheet();renderSport();toast(had?"Figure retirée.":`${SKM[g].n} acquise ! +200 XP`)}
+  else if(a==="skman"){training.manual=training.manual||{};const had=!!training.manual[g];if(!had)socialPost("unlock",`A débloqué ${SKM[g].n}`,{});if(had)delete training.manual[g];else training.manual[g]=isoDay(new Date());saveTraining();closeSheet();renderSport();toast(had?"Figure retirée.":`${SKM[g].n} acquise ! +200 XP`)}
   else if(a==="lv-"||a==="lv+"){const st=training.st[g],F=FAM[g];st.done=false;st.lvl=Math.max(0,Math.min(F.steps.length-1,st.lvl+(a==="lv+"?1:-1)));st.target=[];st.fails=0;saveTraining();renderSport()}
   else if(a==="nodeload"){training.deloadLeft=0;saveTraining();renderSport()}
   else if(a==="act"){profile.activity=g;saveProfile();fillForm();refresh();renderSport();toast("Profil mis à jour, ton plan repas s'ajuste.")}
@@ -2157,7 +2211,7 @@ const pctW=r=>(r>=0?"+":"−")+n1(Math.abs(r*100))+" %";
 function journalCard(i){
   if(i>todayIdx)return "";
   const d=jDay(i),j=jGet(d),wg=waterGoal(i),t=weightTrend();
-  return `<details class="nut journal" ${i===todayIdx&&!(j.w&&j.sh)?"open":""}><summary>Ton suivi ${i===todayIdx?"du jour":"du "+DAYS[i]}</summary>
+  return `<details class="nut journal"><summary>Ton suivi ${i===todayIdx?"du jour":"du "+DAYS[i]}${j.w||j.sh||j.wa?` <span class="tag you">${[j.w?"poids":"",j.sh?"sommeil":"",j.wa?"eau":""].filter(Boolean).join(", ")}</span>`:""}</summary>
    <div class="jgrid">
     <div class="jrow"><span><b>Poids</b><small>${t&&t.avg7?`moyenne 7 jours : ${n1(t.avg7)} kg`:"pèse-toi le matin, à jeun"}</small></span>
       <span class="stepper"><input type="number" step="0.1" min="30" max="250" inputmode="decimal" id="j-w" data-j="w" value="${j.w??""}" placeholder="—" aria-label="Poids en kg"><em>kg</em></span></div>
@@ -2220,7 +2274,7 @@ function scanHtml(){
    <div class="box"><h3>Par le code-barres</h3><p class="note">Les valeurs viennent d'Open Food Facts, la base libre utilisée par Yuka.</p>
      <label class="btn primary block filebtn">Photographier le code-barres<input type="file" accept="image/*" capture="environment" id="bc-file"></label>
      <div class="row"><input id="sc-code" inputmode="numeric" placeholder="ou tape les chiffres (ex. 3017620422003)" aria-label="Code-barres" style="flex:1;min-width:0;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 12px;background:var(--bg)"><button class="btn" data-barcode>Chercher</button></div></div>
-   ${inClaude()?`<div class="box"><h3>Par la photo du tableau</h3><p class="note">Claude lit les valeurs sur la photo, tu vérifies.</p><label class="btn block filebtn">Photographier le tableau nutritionnel<input type="file" accept="image/*" capture="environment" id="sc-file"></label></div>`:""}
+   ${visionReady()?`<div class="box"><h3>Par la photo du tableau</h3><p class="note">L'IA lit les valeurs sur la photo, tu vérifies.</p><label class="btn block filebtn">Photographier le tableau nutritionnel<input type="file" accept="image/*" capture="environment" id="sc-file"></label></div>`:""}
    ${scan.state==="busy"?`<p class="note"><b>Lecture de l'étiquette…</b></p>`:scan.err?`<div class="alert"><span>${esc(scan.err)}</span></div>`:""}
    <form class="box" id="scanForm">
      <label class="f">Produit<input id="sc-nom" value="${esc(d.nom||"")}" placeholder="ex. Skyr nature"></label>
@@ -2239,10 +2293,7 @@ function openScan(){scan={state:"idle",data:null,err:null};openSheet(null,scanHt
 async function runScan(file){
   scan.state="busy";scan.err=null;document.querySelector(".sheet .body").innerHTML=scanHtml();
   try{
-    const sample=window.claude&&window.claude.use?await window.claude.use("sample"):null;
-    const caps=sample?await sample.limits().catch(()=>null):null;
-    if(!sample||!caps||!caps.images)throw{code:"na"};
-    const out=await sample.json(`Cette photo montre l'emballage d'un produit alimentaire vendu en France. Lis le tableau nutritionnel et donne les valeurs POUR 100 g (ou 100 ml). Si l'énergie n'est qu'en kJ, divise par 4,184. Si un prix est visible (étiquette de rayon ou ticket), donne-le. Réponds uniquement avec ce JSON : {"nom":string,"poids_net_g":number|null,"prix_eur":number|null,"kcal":number|null,"proteines":number|null,"glucides":number|null,"sucres":number|null,"lipides":number|null,"satures":number|null,"fibres":number|null,"sel":number|null}. Mets null pour une valeur illisible ; n'invente rien.`,{images:[file],modelTier:"default"});
+    const out=await visionJSON(`Cette photo montre l'emballage d'un produit alimentaire vendu en France. Lis le tableau nutritionnel et donne les valeurs POUR 100 g (ou 100 ml). Si l'énergie n'est qu'en kJ, divise par 4,184. Si un prix est visible (étiquette de rayon ou ticket), donne-le. Réponds uniquement avec ce JSON : {"nom":string,"poids_net_g":number|null,"prix_eur":number|null,"kcal":number|null,"proteines":number|null,"glucides":number|null,"sucres":number|null,"lipides":number|null,"satures":number|null,"fibres":number|null,"sel":number|null}. Mets null pour une valeur illisible ; n'invente rien.`,file);
     scan.data=out||{};scan.state="done";
   }catch(e){scan.state="idle";scan.err=e&&e.code==="na"?"La lecture automatique n'est pas disponible ici : entre les valeurs à la main.":e&&e.code==="not_granted"?"Tu as refusé l'accès à Claude pour cette page : entre les valeurs à la main.":"Je n'ai pas réussi à lire cette photo. Réessaie avec le tableau bien net, ou entre les valeurs à la main."}
   const b=document.querySelector(".sheet .body");if(b)b.innerHTML=scanHtml();
@@ -2383,7 +2434,7 @@ document.addEventListener("click",e=>{
   else if("scan" in d)openScan();
   else if("scanreset" in d){ingOv={};store.set("ingOv",ingOv);applyIngOv();closeSheet();refresh();toast("Valeurs Ciqual rétablies.")}
   else if(d.sp==="test")openTest();
-  else if(d.testapply){JSON.parse(d.testapply).forEach(markLearned);saveTraining();closeSheet();spView="tree";renderSport();toast("Arbre mis à jour.")}
+  else if(d.testapply){const ids=JSON.parse(d.testapply);ids.forEach(markLearned);socialPost("unlock",`A validé ${ids.length} étape${ids.length>1?"s":""} de son arbre`,{sub:ids.slice(-3).map(i=>SKM[i].n).join(", ")});saveTraining();closeSheet();spView="tree";renderSport();toast("Arbre mis à jour.")}
   else if(d.applylv){JSON.parse(d.applylv).forEach(([f,l])=>{const st=training.st[f];st.lvl=l;st.target=[];st.fails=0;st.done=false});saveTraining();closeSheet();renderSport();toast("Niveaux mis à jour.")}
 });
 document.addEventListener("input",e=>{const k=e.target.dataset.j;if(!k)return;const v=parseFloat(String(e.target.value).replace(",","."));clearTimeout(e.target._t);e.target._t=setTimeout(()=>{jSet(jDay(day),{[k]:isFinite(v)&&v>0?v:null});if(k==="w"){const c=document.querySelector(".journal small");}},500)});
@@ -2406,6 +2457,7 @@ document.addEventListener("submit",e=>{
   }else if(e.target.id==="testForm"){
     e.preventDefault();const r={d:isoDay(new Date())};TEST_ITEMS.forEach(([k])=>{const el=document.getElementById("t-"+k);if(el&&el.value!=="")r[k]=+el.value});
     (training.tests=training.tests||[]).push(r);saveTraining();
+    socialPost("test","Test de force",{sub:TEST_ITEMS.filter(([k])=>r[k]!=null).map(([k,l,u])=>`${l} : ${r[k]} ${u}`).join(" · ")});
     const ids=closureIds(testNodes(r));
     if(ids.length)openSheet(null,`<h2>Test enregistré</h2><p>Tes résultats valident ${ids.length} étape${ids.length>1?"s":""} de ton arbre (prérequis compris) :</p><ul class="unlocks">${ids.map(i=>`<li><span class="sk s-done sm"><svg class="i" viewBox="0 0 24 24">${SK_ICON.done}</svg></span><span><b>${esc(SKM[i].n)}</b><small>${SKM[i].m?"Figure":FAM[SKM[i].l[0]].n}</small></span></li>`).join("")}</ul><p class="note">Tes séances passent directement aux étapes suivantes.</p><button class="btn primary block" data-testapply='${JSON.stringify(ids)}'>Valider dans mon arbre</button><button class="btn ghost block" data-close>Ne rien changer</button>`,"Test enregistré");
     else{closeSheet();toast("Test enregistré. Rien de nouveau à valider dans l'arbre.")}
@@ -2531,7 +2583,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-2";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-3";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -2939,6 +2991,7 @@ function renderRun(v,head){
      <li>${hasSport("street")?"Ton street workout compte comme renforcement : garde les jambes lourdes loin de tes séances de qualité.":"Ajoute 2 fois 15 min de renforcement par semaine (squats, fentes, mollets, gainage) : c'est la meilleure prévention des blessures."}</li></ul></div>
    <div class="box"><h3>Réglages</h3><p>${RUN_GOALS[P.goal][0]} · ${P.wd.slice().sort((a,b)=>a-b).map(i=>DAYS[i].slice(0,3)).join(", ")} · sortie longue le ${DAYS[P.longDay]}</p>
      <button class="btn primary block" data-run="edit">Modifier mon plan de course</button><button class="btn sm ghost" data-run="reset">Recommencer à zéro</button></div>`;
+  foldBoxes(v,["Ta semaine","Dernières sorties","Tes allures","Les principes de ton plan","Réglages"]);
 }
 function openRunLog(i,sess,flash){
   const s=flash?flashRun(sess):sess;
@@ -2984,7 +3037,9 @@ document.addEventListener("submit",e=>{if(e.target.id!=="runForm")return;e.preve
   if(!(dur>0)){toast("Indique la durée.");return}
   running.logs.push({d:isoDay(new Date()),n:e.target.dataset.n,type:e.target.dataset.type,dur,dist:isFinite(dist)&&dist>0?dist:null,rpe:runRpe,pain:document.getElementById("rl-pain").checked});
   if(running.logs.length>600)running.logs=running.logs.slice(-600);
-  saveRunning();closeSheet();renderSport();renderPlan();toast(document.getElementById("rl-pain")?.checked?"Sortie notée. Repose la zone douloureuse.":"Sortie notée, bravo !");
+  const painNow=document.getElementById("rl-pain").checked,L=running.logs[running.logs.length-1];
+  socialPost("run",L.n,{sub:`${L.dur} min${L.dist?` · ${n1(L.dist)} km · ${fmtPace(L.dur*60/L.dist)}`:""}`});
+  saveRunning();closeSheet();renderSport();renderPlan();toast(painNow?"Sortie notée. Repose la zone douloureuse.":"Sortie notée, bravo !");
 });
 
 /* ===================== Onboarding (first launch) ===================== */
@@ -3061,6 +3116,221 @@ document.addEventListener("submit",async e=>{
     if(!restored){toast("Connecté. Ton compte est vide : configure ton profil.");wiz=0;show("profil");applyWizard()}
   }catch(err){wlState.busy=false;wlState.err=err.message||"Connexion impossible.";renderWelcome(wlState.mode)}
 });
+/* ===================== Image reading (Claude in the artifact, Gemini key on the phone) ===================== */
+const geminiReady=()=>coachCfg.provider==="gemini"&&!!coachCfg.key;
+const visionReady=()=>inClaude()||geminiReady();
+async function shrinkImage(file,max=1600){
+  try{const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    return await new Promise(r=>c.toBlob(b=>r(b||file),"image/jpeg",.85))}catch(e){return file}
+}
+async function visionJSON(prompt,file){
+  const img=await shrinkImage(file);
+  if(inClaude()){const sample=await window.claude.use("sample");const caps=sample?await sample.limits().catch(()=>null):null;
+    if(sample&&caps&&caps.images)return sample.json(prompt,{images:[img],modelTier:"default"})}
+  if(!geminiReady())throw{code:"na"};
+  const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=rej;fr.readAsDataURL(img)});
+  const body=JSON.stringify({contents:[{role:"user",parts:[{text:prompt},{inline_data:{mime_type:img.type||"image/jpeg",data:b64}}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:6000}});
+  let models=[coachCfg.model||PROVIDERS.gemini.model],lastErr="";
+  for(let k=0;k<4&&models[k];k++){
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[k])}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body});
+    const d=await r.json().catch(()=>({})),e0=Array.isArray(d)?d[0]:d;
+    if(r.ok){const t=(d.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("").replace(/^\s*```(json)?|```\s*$/g,"");return JSON.parse(t)}
+    lastErr=e0?.error?.message||("Erreur "+r.status);if(/API key/i.test(lastErr))throw new Error("Clé Gemini refusée : vérifie-la dans Coach → Réglages.");
+    if(k===0){const sug=(lastErr.match(/models\/(gemini-[\w.\-]+)/)||[])[1];let alts=[];try{alts=await geminiModels()}catch(e){}
+      models=[models[0],...new Set([sug,...alts].filter(x=>x&&x!==models[0]))];if(sug&&/no longer|update your code/i.test(lastErr)){coachCfg.model=sug;saveCoachCfg()}}
+    await new Promise(z=>setTimeout(z,800));
+  }
+  throw new Error(/high demand|overloaded/i.test(lastErr)?"Gemini est saturé en ce moment, réessaie dans quelques minutes.":lastErr);
+}
+
+/* ===================== Receipt scanning: a photo of the till receipt updates store prices ===================== */
+let rcpt={state:"idle",lines:[],store:null,err:null};
+function rcptPrompt(){
+  return `Cette photo est un ticket de caisse d'un supermarché français (souvent Lidl ou E.Leclerc). Lis chaque ligne d'article alimentaire.
+Pour chaque ligne, donne : "libelle" (texte du ticket), "prix_eur" (montant total payé pour la ligne, remises déduites si une ligne de remise suit), "quantite_g" (poids ou volume net TOTAL de la ligne en grammes ou millilitres, déduit du libellé : "500G", "1KG", "4X125G", "X2", "6 OEUFS" = 6 × 60 g, "1L" = 1000 ; pour les articles au poids, le poids pesé ; null si impossible), "ingredient" (l'identifiant de la liste ci-dessous qui correspond le mieux au produit, ou null si aucun ne correspond vraiment).
+Ignore les lignes non alimentaires, sacs, consignes, sous-totaux et moyens de paiement.
+Liste des ingrédients (identifiant : nom) :
+${Object.keys(ING).map(id=>`${id} : ${ING[id].n}`).join("\n")}
+Réponds uniquement avec ce JSON : {"magasin":"lidl"|"leclerc"|null,"date":"AAAA-MM-JJ"|null,"lignes":[{"libelle":string,"prix_eur":number,"quantite_g":number|null,"ingredient":string|null}]}. N'invente aucune ligne.`;
+}
+function rcptHtml(){
+  const st=activeStores(),R=rcpt;
+  let body="";
+  if(R.state==="busy")body=`<p class="note"><b>Lecture du ticket…</b> (10 à 30 secondes)</p>`;
+  else if(R.lines.length){
+    const sel=R.lines.filter(l=>l.on&&l.ingredient&&l.g>0&&l.eur>0).length;
+    body=`<label class="f">Magasin<select id="rc-store">${st.map(s=>`<option value="${s}" ${R.store===s?"selected":""}>${STORES[s].n}</option>`).join("")}</select></label>
+     <p class="note">Vérifie chaque ligne : coche celles à enregistrer et corrige le produit ou le poids si besoin.</p>
+     <div class="rclist">${R.lines.map((l,i)=>`<div class="rcrow ${l.on?"":"off"}">
+       <label class="rcck"><input type="checkbox" data-rc="on" data-i="${i}" ${l.on?"checked":""} aria-label="Enregistrer cette ligne"></label>
+       <div class="rcmain"><b>${esc(l.libelle||"Article")}</b>
+         <select data-rc="ingredient" data-i="${i}" aria-label="Produit correspondant"><option value="">Non utilisé dans l'appli</option>${Object.keys(ING).sort((a,b)=>ING[a].n.localeCompare(ING[b].n)).map(id=>`<option value="${id}" ${id===l.ingredient?"selected":""}>${esc(ING[id].n)}</option>`).join("")}</select>
+         <div class="row"><label class="rcin">Prix<input type="number" step="0.01" inputmode="decimal" data-rc="eur" data-i="${i}" value="${l.eur??""}"> €</label><label class="rcin">Poids<input type="number" step="1" inputmode="numeric" data-rc="g" data-i="${i}" value="${l.g??""}"> g</label>
+         ${l.ingredient&&l.g>0&&l.eur>0?`<span class="tag you">${fmtUnit(l.eur/l.g*100,l.ingredient)}</span>`:""}</div></div></div>`).join("")}</div>
+     <button class="btn primary block" data-rcsave ${sel?"":"disabled"}>Enregistrer ${sel} prix</button>`;
+  }
+  return `<h2>Scanner un ticket de caisse</h2>
+   <p class="muted">Prends ton ticket en photo, bien à plat et lisible. L'appli lit les articles et met à jour tes prix pour ce magasin. Tu peux toujours les modifier ensuite dans « Mes prix ».</p>
+   ${visionReady()?`<label class="btn ${R.lines.length?"":"primary"} block filebtn">${R.lines.length?"Scanner un autre ticket":"Prendre le ticket en photo"}<input type="file" accept="image/*" capture="environment" id="rc-file"></label>`
+     :`<div class="alert"><span>La lecture des tickets utilise l'IA gratuite Gemini. Active-la dans <b>Coach → Réglages</b> (1 min), puis reviens ici.</span></div><button class="btn block" data-coach>Ouvrir le coach</button>`}
+   ${R.err?`<div class="alert"><span>${esc(R.err)}</span></div>`:""}${body}`;
+}
+const fmtUnit=(per100,id)=>ING[id].unit?`${eur(per100*ING[id].unit/100)} / ${ING[id].un}`:`${eur(per100*10)} / kg`;
+function openReceipt(){rcpt={state:"idle",lines:[],store:activeStores()[0]||null,err:null};if(!activeStores().length){toast("Choisis d'abord Lidl ou Leclerc dans ton profil.");return}openSheet(null,rcptHtml(),"Scanner un ticket")}
+function rerenderRcpt(){const b=document.querySelector(".sheet .body");if(b)b.innerHTML=rcptHtml()}
+async function runReceipt(file){
+  rcpt.state="busy";rcpt.err=null;rerenderRcpt();
+  try{const out=await visionJSON(rcptPrompt(),file);
+    const L=(out&&out.lignes||[]).filter(l=>l&&l.libelle);
+    rcpt.lines=L.map(l=>({libelle:l.libelle,eur:+l.prix_eur||null,g:+l.quantite_g||null,ingredient:ING[l.ingredient]?l.ingredient:"",on:!!(ING[l.ingredient]&&+l.quantite_g>0&&+l.prix_eur>0)}));
+    if(out&&STORES[out.magasin]&&activeStores().includes(out.magasin))rcpt.store=out.magasin;
+    rcpt.date=out&&/^\d{4}-\d\d-\d\d$/.test(out.date||"")?out.date:isoDay(new Date());
+    if(!rcpt.lines.length)rcpt.err="Aucun article lu. Reprends la photo plus près, bien éclairée et à plat.";
+  }catch(e){rcpt.err=e&&e.code==="na"?"La lecture automatique n'est pas disponible : active l'IA dans Coach → Réglages.":(e.message||"Lecture impossible.")}
+  rcpt.state="idle";rerenderRcpt();
+}
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.id==="rc-file"&&t.files&&t.files[0])runReceipt(t.files[0]);
+  else if(t.id==="rc-store")rcpt.store=t.value;
+  else if(t.dataset.rc){const l=rcpt.lines[+t.dataset.i],k=t.dataset.rc;if(k==="on")l.on=t.checked;else if(k==="ingredient"){l.ingredient=t.value;if(t.value&&l.g&&l.eur)l.on=true}else l[k]=parseFloat(String(t.value).replace(",","."))||null;
+    const sc=document.querySelector(".sheet").scrollTop;rerenderRcpt();document.querySelector(".sheet").scrollTop=sc}});
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+  if("receipt" in t.dataset)openReceipt();
+  else if("rcsave" in t.dataset){const s=rcpt.store||activeStores()[0];let n=0;
+    rcpt.lines.filter(l=>l.on&&l.ingredient&&l.g>0&&l.eur>0).forEach(l=>{prices[l.ingredient]=prices[l.ingredient]||{};prices[l.ingredient][s]={eur:l.eur,g:l.g,d:rcpt.date};n++});
+    store.set("prices",prices);closeSheet();refresh();toast(`${n} prix ${STORES[s].n} mis à jour.`)}});
+
+/* ===================== Skill tree as bubbles: groups → exercise families → steps ===================== */
+const TGROUPS=[["tirage","Tirage",["pull","row","muscleup"]],["leviers","Leviers",["flever","blever","flag"]],["poussee","Poussée",["dips","pushup","vpush"]],
+  ["equilibre","Équilibre",["hs","planche"]],["gainage","Gainage",["core","lsit"]],["jambes","Jambes",["legs","post"]],["figures","Transitions",[]]];
+let tOpenG=null,tOpenF=null,treeMode="bubbles";
+function ringSvg(p,state){const r=26,C=2*Math.PI*r;return `<svg class="ring2" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="${r}" class="rt"/><circle cx="32" cy="32" r="${r}" class="rv ${state||""}" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}"/></svg>`}
+const groupNodes=g=>g[0]==="figures"?SK.filter(x=>x.m):g[2].flatMap(f=>SK.filter(x=>x.l&&x.l[0]===f));
+function famNodes(f){return SK.filter(x=>x.l&&x.l[0]===f)}
+function treeBubbles(){
+  const P=prof(),goalPath=P.goal==="fig"&&SKM[P.target]?new Set(pathTo(P.target)):new Set();
+  const grp=TGROUPS.map(g=>{const N=groupNodes(g),d=N.filter(skLearned).length,goal=N.some(x=>goalPath.has(x.id));
+    return `<button class="bub ${tOpenG===g[0]?"on":""}" data-tg="${g[0]}" aria-expanded="${tOpenG===g[0]}">${ringSvg(d/N.length)}<span class="bubn">${g[1]}</span><span class="bubc">${d}/${N.length}</span>${goal?`<span class="bubgoal" title="Sur le chemin de ton objectif">★</span>`:""}</button>`}).join("");
+  let panel="";
+  const g=TGROUPS.find(x=>x[0]===tOpenG);
+  if(g){
+    if(g[0]==="figures")panel=`<div class="tpanel"><h3>Transitions et figures à cocher</h3><p class="note">Elles ne font pas partie des séances automatiques : tu les travailles 10 min en début de séance, et tu les coches quand tu les tiens.</p>${stepList(SK.filter(x=>x.m).sort((a,b)=>a.t-b.t),goalPath)}</div>`;
+    else{
+      const fams=g[2].map(f=>{const N=famNodes(f),d=N.filter(skLearned).length,st=training.st[f],lk=famLocked(f),cur=FAM[f].steps[st.lvl];
+        return `<button class="fbub ${tOpenF===f?"on":""}" data-tf="${f}" aria-expanded="${tOpenF===f}">${ringSvg(d/N.length,lk?"lock":"")}<span><b>${FAM[f].n}</b><small>${lk?"Verrouillée":stepMastered(f,N.length-1)?"Terminée !":"En cours : "+esc(cur[4]||cur[0])}</small></span><span class="bubc">${d}/${N.length}</span></button>`}).join("");
+      panel=`<div class="tpanel"><div class="fbubs">${fams}</div>${tOpenF&&g[2].includes(tOpenF)?`<div class="tpath"><p class="note">${esc(FAM[tOpenF].cue)}</p>${stepList(famNodes(tOpenF),goalPath)}</div>`:`<p class="note">Touche un exercice pour voir toutes ses étapes.</p>`}</div>`;
+    }
+  }
+  return `<div class="bubs">${grp}</div>${panel||`<p class="note" style="text-align:center">Touche une bulle pour ouvrir la branche.</p>`}`;
+}
+function stepList(nodes,goalPath){
+  return `<ol class="steps">${nodes.map(x=>{const s=skState(x),miss=x.m?[]:missingFor(x.l[0],x.l[1]),st=x.m?null:FAM[x.l[0]].steps[x.l[1]];
+    const sub=x.m?(s==="lock"?"Prérequis : "+x.r.map(r=>SKM[r].n).join(", "):SK_TXT[s]):s==="lock"&&miss.length?"Maîtrise d'abord "+reqText(miss):`${st[1]} à ${st[2]} ${unitOf(x.l[0])}${sideOf(st)}`;
+    return `<li class="st-${s}"><button data-sp="skn" data-arg="${x.id}"><span class="sk sm s-${s}${x.m?" fig":""}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${SK_ICON[s]}</svg></span>
+      <span class="stx"><b>${esc(x.n)}${goalPath.has(x.id)?` <span class="tag g">objectif</span>`:""}</b><small>${esc(sub)}</small></span><span class="lvl">${lvlName(x.t)}</span></button></li>`}).join("")}</ol>`;
+}
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
+  if(d.tg){tOpenG=tOpenG===d.tg?null:d.tg;tOpenF=null;const g=TGROUPS.find(x=>x[0]===tOpenG);if(g&&g[2].length){const P=prof();tOpenF=g[2].find(f=>goalFams().includes(f))||g[2].find(f=>!famLocked(f))||g[2][0]}renderSport()}
+  else if(d.tf){tOpenF=tOpenF===d.tf?null:d.tf;renderSport()}
+  else if(d.tmode){treeMode=d.tmode;renderSport();if(treeMode==="map")requestAnimationFrame(focusTree)}});
+
+/* ===================== Decluttering: secondary sections fold away ===================== */
+const openFolds=new Set();
+function foldBoxes(root,titles){
+  root.querySelectorAll(":scope > .box").forEach(b=>{const h=b.querySelector(":scope > h3");if(!h)return;const t=h.textContent.trim();
+    if(!titles.some(x=>t.startsWith(x)))return;
+    const d=document.createElement("details");d.className="nut fold";if(openFolds.has(t))d.open=true;
+    const s=document.createElement("summary");s.textContent=t;d.appendChild(s);const inner=document.createElement("div");inner.className="foldin";
+    h.remove();while(b.firstChild)inner.appendChild(b.firstChild);d.appendChild(inner);b.replaceWith(d);
+    d.addEventListener("toggle",()=>{d.open?openFolds.add(t):openFolds.delete(t)})});
+}
+
+/* ===================== Friends (Strava-like feed) through Supabase ===================== */
+let social={me:null,friends:[],pending:[],feed:[],kudos:{},loaded:false,err:null};
+async function sbq(table,method,query,body,prefer){
+  const t=await sbToken();if(!t)throw new Error("Connecte-toi à ton compte (Profil) pour utiliser les amis.");
+  const r=await fetch(`${SB.url}/rest/v1/${table}${query||""}`,{method,headers:{apikey:SB.key,Authorization:"Bearer "+t,"content-type":"application/json",...(prefer?{Prefer:prefer}:{})},body:body?JSON.stringify(body):undefined});
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(/relation .* does not exist|Could not find the table/i.test(d.message||"")?"La fonction Amis n'est pas encore activée sur le serveur (fichier setup-amis.sql à exécuter dans Supabase).":(d.message||("Erreur "+r.status)))}
+  return r.status===204?null:r.json().catch(()=>null);
+}
+function myStats(){
+  const xp=training?xpTotal():0,since=isoDay(monday);
+  return{rank:training?RANKS[rankOf(xp)][1]:null,xp,figs:training?SK.filter(skLearned).length:0,
+    week_sessions:(training?training.sessions.filter(s=>s.d>=since).length:0)+(running?running.logs.filter(l=>l.d>=since).length:0),
+    week_run_min:running?running.logs.filter(l=>l.d>=since).reduce((a,l)=>a+l.dur,0):0,
+    goal:training&&prof().goal==="fig"&&SKM[prof().target]?SKM[prof().target].n:null,sports:profile.sports||[]};
+}
+async function socialLoad(){
+  if(!SB||!sbSession)return;
+  try{
+    const me=await sbq("social_profiles","GET",`?user_id=eq.${sbSession.uid}&select=*`);social.me=me&&me[0]||null;
+    if(social.me){
+      const fr=await sbq("friendships","GET",`?or=(requester.eq.${sbSession.uid},addressee.eq.${sbSession.uid})&select=*`)||[];
+      const ids=[...new Set(fr.flatMap(f=>[f.requester,f.addressee]).filter(i=>i!==sbSession.uid))];
+      const profs=ids.length?await sbq("social_profiles","GET",`?user_id=in.(${ids.join(",")})&select=*`)||[]:[];const P={};profs.forEach(p=>P[p.user_id]=p);
+      social.friends=fr.filter(f=>f.status==="accepted").map(f=>P[f.requester===sbSession.uid?f.addressee:f.requester]).filter(Boolean);
+      social.pending=fr.filter(f=>f.status==="pending").map(f=>({f,p:P[f.requester===sbSession.uid?f.addressee:f.requester],incoming:f.addressee===sbSession.uid})).filter(x=>x.p);
+      const fids=[sbSession.uid,...social.friends.map(p=>p.user_id)];
+      social.feed=await sbq("activities","GET",`?user_id=in.(${fids.join(",")})&order=created_at.desc&limit=40&select=*`)||[];
+      const aids=social.feed.map(a=>a.id);const K=aids.length?await sbq("kudos","GET",`?activity_id=in.(${aids.join(",")})&select=*`)||[]:[];
+      social.kudos={};K.forEach(k=>(social.kudos[k.activity_id]=social.kudos[k.activity_id]||[]).push(k.user_id));
+      social.byId={};[social.me,...social.friends].forEach(p=>social.byId[p.user_id]=p);
+    }
+    social.err=null;
+  }catch(e){social.err=e.message}
+  social.loaded=true;if(spView==="friends")renderSport();
+}
+async function socialPost(kind,title,detail){
+  if(!SB||!sbSession||!social.me||social.me.share===false)return;
+  try{await sbq("activities","POST","",{user_id:sbSession.uid,kind,title,detail:detail||{}},"return=minimal");
+    await sbq("social_profiles","PATCH",`?user_id=eq.${sbSession.uid}`,{stats:myStats(),updated_at:new Date().toISOString()},"return=minimal")}catch(e){}
+}
+const ago=iso=>{const m=Math.round((Date.now()-Date.parse(iso))/6e4);return m<60?`il y a ${Math.max(1,m)} min`:m<1440?`il y a ${Math.round(m/60)} h`:new Date(iso).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})};
+const initials=n=>esc(String(n||"?").slice(0,2).toUpperCase());
+function friendsHtml(){
+  if(!SB)return `<div class="welcome"><p>Les amis ne sont disponibles que dans l'appli installée sur ton téléphone, avec un compte.</p></div>`;
+  if(!sbSession)return `<div class="welcome"><h3>Suis la progression de tes potes</h3><p>Connecte-toi ou crée un compte pour ajouter des amis, voir leurs séances et leur envoyer des bravos.</p><button class="btn primary sm" data-v="profil">Me connecter</button></div>`;
+  if(!social.loaded){socialLoad();return `<p class="note">Chargement…</p>`}
+  if(social.err&&!social.me)return `<div class="alert"><span>${esc(social.err)}</span></div><button class="btn sm" data-fr="reload">Réessayer</button>`;
+  if(!social.me)return `<div class="card"><h2>Ton profil public</h2><p class="muted">Choisis un pseudo. Tes amis verront ton pseudo, ton rang, tes figures, tes séances et tes sorties de la semaine. Rien d'autre (ni poids, ni repas).</p>
+     <form id="frSetup" class="profile" style="gap:10px"><label class="f">Pseudo<input id="fr-pseudo" maxlength="20" minlength="3" required placeholder="ex. xavier_barres"></label><button class="btn primary block" type="submit">Créer mon profil</button></form></div>`;
+  const me=social.me,lb=[me,...social.friends].map(p=>({p,s:p.user_id===me.user_id?myStats():(p.stats||{})})).sort((a,b)=>(b.s.week_sessions||0)-(a.s.week_sessions||0)||(b.s.xp||0)-(a.s.xp||0));
+  return `<div class="card"><div class="row" style="justify-content:space-between"><span><span class="k muted">Ton code ami</span><h2 class="code">${esc(me.code)}</h2></span><button class="btn sm" data-fr="copy">Copier</button></div>
+     <p class="note">Donne ce code à tes potes pour qu'ils t'ajoutent, ou ajoute-les avec le leur.</p>
+     <form id="frAdd" class="row"><input id="fr-code" placeholder="Code de ton ami" maxlength="8" autocomplete="off" style="flex:1;min-width:0;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 12px;background:var(--bg);text-transform:uppercase"><button class="btn primary" type="submit">Ajouter</button></form>
+     ${social.err?`<p class="note" style="color:var(--warn)">${esc(social.err)}</p>`:""}</div>
+   ${social.pending.length?`<div class="box"><h3>Demandes</h3>${social.pending.map(x=>`<div class="hrow"><span><b>${esc(x.p.pseudo)}</b><small>${x.incoming?"veut t'ajouter":"en attente de réponse"}</small></span>${x.incoming?`<span class="row"><button class="btn sm primary" data-fr="accept" data-id="${x.f.id}">Accepter</button><button class="btn sm ghost" data-fr="decline" data-id="${x.f.id}">Refuser</button></span>`:""}</div>`).join("")}</div>`:""}
+   <div class="box"><h3>Classement de la semaine</h3>${lb.map((x,i)=>`<div class="hrow"><span class="frrow"><span class="av">${initials(x.p.pseudo)}</span><span><b>${i+1}. ${esc(x.p.pseudo)}${x.p.user_id===me.user_id?" (toi)":""}</b><small>${x.s.week_sessions||0} séance${(x.s.week_sessions||0)>1?"s":""}${x.s.week_run_min?` · ${x.s.week_run_min} min de course`:""}${x.s.rank?` · ${esc(x.s.rank)}`:""}</small></span></span><span class="tag you">${x.s.figs||0} figures</span></div>`).join("")}
+     ${social.friends.length?"":`<p class="note">Ajoute tes potes avec leur code pour vous motiver ensemble.</p>`}</div>
+   <div class="box"><h3>Fil d'activité</h3>${social.feed.length?social.feed.map(a=>{const p=social.byId[a.user_id]||{pseudo:"?"},K=social.kudos[a.id]||[],mine=K.includes(sbSession.uid);
+     return `<div class="feed"><span class="av">${initials(p.pseudo)}</span><div><p><b>${esc(p.pseudo)}</b> <span class="muted">· ${ago(a.created_at)}</span></p><p>${esc(a.title)}</p>${a.detail&&a.detail.sub?`<p class="note">${esc(a.detail.sub)}</p>`:""}
+       ${a.user_id===sbSession.uid?(K.length?`<p class="note">${K.length} bravo${K.length>1?"s":""}</p>`:""):`<button class="btn sm ${mine?"primary":"ghost"}" data-fr="kudo" data-id="${a.id}" ${mine?"disabled":""}>Bravo${K.length?" · "+K.length:""}</button>`}</div></div>`}).join(""):`<p class="note">Rien pour l'instant. Tes séances, sorties et figures débloquées apparaîtront ici et chez tes amis.</p>`}</div>
+   <div class="box"><h3>Confidentialité</h3><div class="seg"><label><input type="checkbox" id="fr-share" ${me.share!==false?"checked":""}><span>Partager mes activités avec mes amis</span></label></div>
+     <p class="note">Seuls tes amis acceptés voient ton fil. Ton poids, tes repas et ton sommeil ne sont jamais partagés.</p></div>`;
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id==="frSetup"){e.preventDefault();const pseudo=document.getElementById("fr-pseudo").value.trim();
+    if(!/^[\p{L}0-9_.\- ]{3,20}$/u.test(pseudo)){toast("Pseudo : 3 à 20 lettres, chiffres, tirets.");return}
+    const code=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>"ABCDEFGHJKMNPQRSTUVWXYZ23456789"[b%31]).join("");
+    try{await sbq("social_profiles","POST","",{user_id:sbSession.uid,pseudo,code,share:true,stats:myStats()},"return=minimal");social.loaded=false;await socialLoad();toast("Profil créé.")}
+    catch(err){toast(/duplicate|unique/i.test(err.message)?"Ce pseudo est déjà pris.":err.message)}}
+  else if(e.target.id==="frAdd"){e.preventDefault();const code=document.getElementById("fr-code").value.trim().toUpperCase();if(!code)return;
+    try{const f=await sbq("rpc/add_friend","POST","",{friend_code:code});social.loaded=false;await socialLoad();toast(f==="already"?"Vous êtes déjà amis ou une demande existe.":"Demande envoyée.")}
+    catch(err){toast(/not found|introuvable/i.test(err.message)?"Aucun profil avec ce code.":err.message)}}
+});
+document.addEventListener("click",async e=>{const t=e.target.closest("[data-fr]");if(!t)return;const a=t.dataset.fr,id=t.dataset.id;
+  try{
+    if(a==="reload"){social.loaded=false;renderSport()}
+    else if(a==="copy"){try{await navigator.clipboard.writeText(social.me.code);toast("Code copié.")}catch(_){toast("Ton code : "+social.me.code)}}
+    else if(a==="accept"){await sbq("friendships","PATCH",`?id=eq.${id}`,{status:"accepted"},"return=minimal");social.loaded=false;await socialLoad();toast("Ami ajouté !")}
+    else if(a==="decline"){await sbq("friendships","DELETE",`?id=eq.${id}`);social.loaded=false;await socialLoad()}
+    else if(a==="kudo"){await sbq("kudos","POST","",{activity_id:+id,user_id:sbSession.uid},"return=minimal");(social.kudos[id]=social.kudos[id]||[]).push(sbSession.uid);renderSport()}
+  }catch(err){toast(err.message)}
+});
+document.addEventListener("change",async e=>{if(e.target.id!=="fr-share")return;try{await sbq("social_profiles","PATCH",`?user_id=eq.${sbSession.uid}`,{share:e.target.checked},"return=minimal");social.me.share=e.target.checked;toast(e.target.checked?"Partage activé.":"Partage désactivé.")}catch(err){toast(err.message)}});
+
+document.addEventListener("click",e=>{const t=e.target.closest('[data-sp="view"]');if(t&&t.dataset.arg==="friends"){social.loaded=false;socialLoad()}});
 const LS=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const firstRun=LS("pp_onboarding")==="1"||(!saved&&!training&&!running&&!LS("pp_onboarded"));
 if(!(saved&&saved.sports))profile.sports=[training&&"street",running&&"run"].filter(Boolean);
