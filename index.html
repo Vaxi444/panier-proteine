@@ -386,6 +386,17 @@ form.ask input{flex:1;min-width:0;min-height:48px;border:1.5px solid var(--line)
 .runbars{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;height:130px;margin-top:8px}
 .runbars .sb{grid-template-rows:96px auto auto}
 .runbars em{font-style:normal;font-size:.68rem;color:var(--muted);text-align:center}
+body.onboarding nav.tabbar,body.onboarding .fab,body.onboarding #acctHost,body.onboarding #dataBox,body.onboarding .sporttabs,body.onboarding #syncChip{display:none!important}
+body.onboarding .wrap{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.wl{display:grid;gap:16px;padding-top:24px}
+.wllogo{width:72px;height:72px;border-radius:22px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.wllogo svg.i{width:40px;height:40px}
+.wl h1{font-size:2rem;font-weight:700}
+.wlsub{font-size:1.1rem;color:var(--muted)}
+.wlfeat{list-style:none;margin:4px 0;padding:0;display:grid;gap:10px}
+.wlfeat li{background:var(--surface);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);display:grid;gap:2px}
+.wlfeat span{color:var(--muted);font-size:.9rem}
+.wlback{justify-self:start}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -423,6 +434,7 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
     <span class="free" id="syncChip">Gratuit, sans compte</span>
   </header>
 
+  <section class="view" id="v-welcome" aria-label="Bienvenue" hidden></section>
   <section class="view" id="v-plan" aria-label="Semaine"></section>
   <section class="view" id="v-courses" aria-label="Courses" hidden></section>
   <section class="view" id="v-recettes" aria-label="Recettes" hidden></section>
@@ -442,7 +454,6 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
           <label><input type="checkbox" name="sp_run" id="sp_run"><span>Course à pied</span></label>
         </div>
         <p class="hint">Aucun coché : l'appli se concentre sur tes repas et tes courses.</p>
-        <button type="button" class="linkbtn" data-goacct>J'ai déjà un compte : récupérer mes données</button>
       </fieldset>
       <fieldset data-title="Parle-nous de toi"><legend>Toi</legend>
         <div class="seg" role="radiogroup" aria-label="Sexe">
@@ -1360,7 +1371,7 @@ function applyWizard(){
   document.getElementById("pfSubmit").hidden=on&&wiz<FS.length-1;
   document.getElementById("pfSubmit").textContent=on?"Créer mon plan":"Mettre à jour mon plan";
   document.getElementById("wizNext").hidden=on&&wiz===FS.length-1;
-  document.getElementById("wizPrev").textContent=wiz===0?"Plus tard":"Retour";
+  document.getElementById("wizPrev").textContent=wiz===0&&!onboarding()?"Plus tard":"Retour";
   if(on){document.getElementById("wizStep").textContent=`Étape ${wiz+1} sur ${FS.length}`;document.getElementById("wizBar").style.width=((wiz+1)/FS.length*100)+"%"}
 }
 
@@ -1368,7 +1379,8 @@ function renderAll(){renderPlan();renderCourses();renderPrix();renderRecettes()}
 function refresh(){plan=buildPlan(profile);renderAll()}
 function show(view){
   document.querySelectorAll("nav.tabbar button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===view||(view==="prix"&&b.dataset.v==="courses")));
-  ["plan","courses","recettes","prix","sport","profil"].forEach(x=>document.getElementById("v-"+x).hidden=x!==view);
+  if(onboarding()&&!["welcome","profil","sport"].includes(view))return;
+  ["welcome","plan","courses","recettes","prix","sport","profil"].forEach(x=>document.getElementById("v-"+x).hidden=x!==view);
   if(view!=="profil"&&wiz!=null){wiz=null;applyWizard()}
   if(view==="plan"&&plan&&!plan.error)renderPlan();
   if(view==="sport")renderSport();
@@ -1408,7 +1420,7 @@ document.addEventListener("click",e=>{
   else if(t.id==="uncheck"){checked.clear();store.set("checked",[]);renderCourses()}
   else if(t.id==="resetPrices"){if(t.dataset.armed){prices={};store.set("prices",prices);refresh();toast("Prix effacés.")}else{t.dataset.armed="1";t.textContent="Appuie encore pour confirmer"}}
   else if(t.id==="wizNext"){wiz=Math.min(FS.length-1,wiz+1);applyWizard();window.scrollTo(0,0)}
-  else if(t.id==="wizPrev"){if(wiz===0){wiz=null;applyWizard();show("plan")}else{wiz--;applyWizard()}window.scrollTo(0,0)}
+  else if(t.id==="wizPrev"){if(wiz===0){wiz=null;applyWizard();if(onboarding()){renderWelcome("home");show("welcome")}else show("plan")}else{wiz--;applyWizard()}window.scrollTo(0,0)}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
@@ -1432,6 +1444,7 @@ document.addEventListener("submit",e=>{
     e.preventDefault();profile=readForm();saveProfile();exampleMode=false;day=todayIdx;checked.clear();store.set("checked",[]);
     wiz=null;applyWizard();refresh();updateTabs();
     onboardQueue=[];if(hasSport("street")&&!training)onboardQueue.push("street");if(hasSport("run")&&!running)onboardQueue.push("run");
+    if(onboarding()){onboardActive=true;if(onboardQueue.length)toast("Ton plan repas est prêt. Passons au sport.");nextOnboard();return}
     if(onboardQueue.length){onboardActive=true;toast("Ton plan repas est prêt. Passons au sport.");nextOnboard();return}
     try{localStorage.setItem("pp_onboarded","1")}catch(_){}
     show("plan");toast("Ton plan est prêt.");
@@ -2104,7 +2117,7 @@ async function initCloud(){
     cloudReady=true;
     if(!a.exists)dirty.add("app");if(!t.exists&&training)dirty.add("training");
     if(dirty.size)flushCloud();else setSync("ok");
-    if(a.exists&&a.data().profile&&wiz!=null){wiz=null;applyWizard();show("plan")}
+    if(a.exists&&a.data().profile&&onboarding()){wiz=null;applyWizard();finishOnboarding(true)}
     fillForm();refresh();renderSport();updateTabs();
   }catch(e){cloudReady=false}
 }
@@ -2518,7 +2531,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-1";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-2";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -2715,7 +2728,8 @@ async function sbPull(first){
       if(remote>Math.max(local,sbState.last)||(first&&!localHasData)){
         SYNC_KEYS.forEach(k=>{const v=rows[0].data[k];if(v===null||v===undefined)localStorage.removeItem("pp_"+k);else localStorage.setItem("pp_"+k,JSON.stringify(v))});
         localStorage.setItem("pp_localUpdated",String(remote));localStorage.setItem("pp_sblast",String(remote));
-        toast("Données de ton compte récupérées.");setTimeout(()=>location.reload(),700);return;
+        try{localStorage.setItem("pp_onboarded","1");localStorage.removeItem("pp_onboarding")}catch(e){}
+        toast("Données de ton compte récupérées.");setTimeout(()=>location.reload(),700);return true;
       }
     }
     await sbPush();
@@ -2979,8 +2993,9 @@ function nextOnboard(){
   const n=onboardQueue.shift();
   if(n==="street"){spSport="street";startWizard(false);show("sport");return}
   if(n==="run"){spSport="run";runWiz={step:0,edit:false,d:runDefaults()};show("sport");return}
-  onboardActive=false;try{localStorage.setItem("pp_onboarded","1")}catch(e){}
-  updateTabs();show("plan");toast("Tout est prêt. Bonne semaine !");
+  onboardActive=false;
+  if(onboarding()&&SB&&!sbSession){renderWelcome("save");show("welcome");window.scrollTo(0,0);return}
+  finishOnboarding();
 }
 function updateTabs(){
   const b=document.querySelector('nav.tabbar [data-v="sport"]');if(!b)return;
@@ -2992,12 +3007,70 @@ function updateTabs(){
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
   if(t.dataset.sport){spSport=t.dataset.sport;spView="prog";renderSport();window.scrollTo(0,0)}
   else if(t.dataset.sportGo){spSport=t.dataset.sportGo;show("sport")}
-  else if("goacct" in t.dataset){wiz=null;applyWizard();setTimeout(()=>{const h=document.getElementById("acctHost");if(h)h.scrollIntoView({behavior:"smooth"})},50)}});
-const firstRun=!saved&&!training&&!running&&!(()=>{try{return localStorage.getItem("pp_onboarded")}catch(e){return null}})();
+});
+
+/* ===================== Welcome / first launch gate =====================
+   Until the profile is done, only the welcome screen and the setup steps are reachable. */
+function onboarding(){return document.body.classList.contains("onboarding")}
+function startOnboarding(){try{localStorage.setItem("pp_onboarding","1")}catch(e){}document.body.classList.add("onboarding");renderWelcome("home");show("welcome")}
+function finishOnboarding(silent){
+  document.body.classList.remove("onboarding");
+  try{localStorage.setItem("pp_onboarded","1");localStorage.removeItem("pp_onboarding")}catch(e){}
+  updateTabs();refresh();renderSport();show("plan");if(!silent)toast("Tout est prêt. Bonne semaine !");
+}
+let wlState={busy:false,err:null};
+const LOGO_BIG='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h2l2.2 10.5h10.6L20 8H6.3"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>';
+function renderWelcome(mode){
+  const v=document.getElementById("v-welcome");wlState.mode=mode;
+  const form=(id,btn,ac)=>`<form id="${id}" class="profile" style="gap:12px">
+      <label class="f">Email<input id="${id}-email" type="email" autocomplete="email" required></label>
+      <label class="f">Mot de passe<input id="${id}-pass" type="password" autocomplete="${ac}" minlength="6" required></label>
+      ${wlState.err?`<p class="note" style="color:var(--warn)"><b>${esc(wlState.err)}</b></p>`:""}
+      <button class="btn primary block" type="submit" ${wlState.busy?"disabled":""}>${wlState.busy?"Un instant…":btn}</button></form>`;
+  if(mode==="login")v.innerHTML=`<div class="wl"><button class="btn sm ghost wlback" data-wl="home">← Retour</button>
+     <h1>Content de te revoir</h1><p class="muted">Connecte-toi pour retrouver ton profil, tes séances et ta progression.</p>${form("wlLogin","Se connecter","current-password")}</div>`;
+  else if(mode==="save")v.innerHTML=`<div class="wl"><div class="wllogo">${LOGO_BIG}</div>
+     <h1>Sauvegarde ta progression</h1><p class="muted">Crée un compte gratuit : tes repas, tes séances et ton arbre sont enregistrés en ligne et tu les retrouves sur n'importe quel téléphone.</p>
+     ${form("wlSignup","Créer mon compte","new-password")}
+     <button class="btn ghost block" data-wl="skip">Plus tard</button>
+     <p class="note">Sans compte, tes données restent seulement sur ce téléphone. Tu pourras en créer un plus tard dans Profil.</p></div>`;
+  else v.innerHTML=`<div class="wl"><div class="wllogo">${LOGO_BIG}</div>
+     <h1>Panier Protéiné</h1><p class="wlsub">Tes repas protéinés dans ton budget, et un programme de sport qui s'adapte à toi.</p>
+     <ul class="wlfeat">
+       <li><b>Plan repas et courses</b><span>Recettes, CROUS, prix Lidl et Leclerc</span></li>
+       <li><b>Street workout et course à pied</b><span>Séances qui progressent avec toi, arbre de figures</span></li>
+       <li><b>Coach et suivi</b><span>Poids, sommeil, tests de force</span></li></ul>
+     <button class="btn primary block" data-wl="start">Commencer</button>
+     ${SB?`<button class="btn ghost block" data-wl="login">J'ai déjà un compte</button>`:""}
+     <p class="note" style="text-align:center">Environ 2 minutes de questions pour configurer ton plan.</p></div>`;
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-wl]");if(!t)return;const a=t.dataset.wl;wlState.err=null;
+  if(a==="start"){wiz=0;show("profil");applyWizard();window.scrollTo(0,0)}
+  else if(a==="login"||a==="home"){renderWelcome(a);window.scrollTo(0,0)}
+  else if(a==="skip")finishOnboarding();
+});
+document.addEventListener("submit",async e=>{
+  const id=e.target.id;if(id!=="wlLogin"&&id!=="wlSignup")return;e.preventDefault();
+  const email=document.getElementById(id+"-email").value.trim(),password=document.getElementById(id+"-pass").value;
+  wlState.busy=true;wlState.err=null;renderWelcome(wlState.mode);
+  try{
+    if(id==="wlSignup"){const d=await sbAuth("signup",{email,password});if(!sbStore(d)){wlState.busy=false;wlState.err="Compte créé. Ouvre le lien de confirmation reçu par email, puis connecte-toi depuis Profil.";renderWelcome("save");return}
+      wlState.busy=false;sbChip();renderAccount();await sbPush();finishOnboarding();toast("Compte créé, ta progression est sauvegardée.");return}
+    sbStore(await sbAuth("token?grant_type=password",{email,password}));wlState.busy=false;sbChip();renderAccount();
+    const restored=await sbPull(true);
+    if(!restored){toast("Connecté. Ton compte est vide : configure ton profil.");wiz=0;show("profil");applyWizard()}
+  }catch(err){wlState.busy=false;wlState.err=err.message||"Connexion impossible.";renderWelcome(wlState.mode)}
+});
+const LS=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const firstRun=LS("pp_onboarding")==="1"||(!saved&&!training&&!running&&!LS("pp_onboarded"));
 if(!(saved&&saved.sports))profile.sports=[training&&"street",running&&"run"].filter(Boolean);
 if(running)evalRunWeek();
 migrateTraining();saveTraining();applyIngOv();buildCrousFields();fillForm();applyWizard();refresh();renderSport();initCloud();renderAccount();sbChip();if(SB&&sbSession)sbPull(false);
-updateTabs();if(firstRun){wiz=0;applyWizard();show("profil");wiz=0;applyWizard()}
+updateTabs();if(firstRun){
+  // Resume an interrupted setup where it stopped.
+  if(saved){onboardQueue=[];if(hasSport("street")&&!training)onboardQueue.push("street");if(hasSport("run")&&!running)onboardQueue.push("run");
+    document.body.classList.add("onboarding");onboardActive=true;nextOnboard()}
+  else startOnboarding()}
 </script>
 
 <script>
