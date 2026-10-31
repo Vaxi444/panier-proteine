@@ -60,7 +60,8 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--ink)}
-body{font-family:var(--f-body);font-size:17px;line-height:1.5;margin:0;font-variant-numeric:tabular-nums}
+html{font-size:calc(100% * var(--z,1))}
+body{font-family:var(--f-body);font-size:1.0625rem;line-height:1.5;margin:0;font-variant-numeric:tabular-nums}
 .wrap{max-width:620px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px calc(160px + env(safe-area-inset-bottom,0px))}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2;font-weight:600}
 h2{font-size:1.3rem} h3{font-size:1.05rem}
@@ -181,8 +182,8 @@ section.view{display:grid;gap:18px;padding-top:10px}
 .nut{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
 .nut>summary,.nut>h3{padding:14px 16px;font-family:var(--f-display);font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
 .nut>summary::-webkit-details-marker{display:none}
-.nut>summary::after{content:"Masquer";font-family:var(--f-body);font-size:.85rem;color:var(--accent);font-weight:700}
-.nut:not([open])>summary::after{content:"Afficher"}
+.nut>summary{pointer-events:none;cursor:default}
+.nut>summary::after{content:none}
 .nrow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
 .pill{font-size:.75rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
 .pill.g{background:var(--accent-soft);color:var(--ok)} .pill.m{background:var(--t-egg-bg);color:var(--mid)} .pill.b{background:var(--t-beef-bg);color:var(--warn)} .pill.n{background:var(--surface2);color:var(--muted)}
@@ -438,6 +439,43 @@ details.fold>.foldin .hrow:first-child,details.fold>.foldin .lvrow:first-child{b
 .frrow{display:flex;gap:10px;align-items:center}
 .feed{display:grid;grid-template-columns:36px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .feed:first-of-type{border-top:0}.feed p{margin:0}
+/* ===== Refonte : plat, aéré, lisible ===== */
+:root{--shadow:none}
+.card,.box,.nut,.meal,.list,.rcard,.prow,.famtree,.tpanel,.days button,.search,.fbub,fieldset,.wlfeat li,.ritem{border:1px solid var(--line);box-shadow:none!important}
+.card,.box,.nut,.meal{border-radius:18px}
+section.view{gap:14px}
+.hello h1{font-size:1.6rem}
+h2.sect{font-family:var(--f-display);font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 2px -4px}
+.slotname{margin:2px 4px -8px}
+.headr{display:flex;align-items:center;gap:8px}
+.apphead{gap:8px}.apphead .logo{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}.headr{flex-shrink:0}.bigtext .headr .free{display:none}.journal .chips{flex-wrap:wrap}.headr .free{font-size:.72rem;max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zoomctl{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.zoomctl button{border:0;background:none;min-width:40px;min-height:34px;font-weight:700;font-family:var(--f-display);color:var(--ink)}
+.zoomctl button+button{border-left:1px solid var(--line)}
+.fab{width:52px;height:52px;min-height:0;padding:0;justify-content:center;border-radius:50%}
+.tabs2{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs2 .chip{border:0;background:none;border-radius:0;min-height:44px;padding:0 12px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs2 .chip[aria-pressed="true"]{background:none;color:var(--ink);border-bottom-color:var(--accent)}
+.seg2{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface2);border-radius:14px;padding:4px;gap:4px}
+.seg2 .chip{border:0;background:none;min-height:40px;border-radius:10px;justify-content:center;text-align:center}
+.seg2 .chip[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.nutday{display:grid;grid-template-columns:1fr 1fr}
+.nutday>summary{grid-column:1/-1}
+.nutday .nrow{grid-template-columns:1fr auto;border-top:1px solid var(--line);padding:9px 14px;border-left:4px solid var(--line)}
+.nutday .nrow:has(.pill.g){border-left-color:var(--ok)}.nutday .nrow:has(.pill.m){border-left-color:var(--mid)}.nutday .nrow:has(.pill.b){border-left-color:var(--warn)}
+.nutday .nrow .pill,.nutday .nrow .bar,.nutday .nrow .lbl small{display:none}
+.nutday .nrow .val small{display:none}
+.journal>summary.sr{position:absolute}
+.item{grid-template-columns:28px 1fr auto;align-items:center}
+.prbtn{display:grid;justify-items:end;border:0;background:none;font-weight:700;font-size:1rem;min-height:44px;padding:0 0 0 8px;color:var(--ink)}
+.prbtn small{font-size:.72rem;font-weight:700;color:var(--muted)}
+.prbtn.you small{color:var(--ok)}
+.tgroup{display:grid;gap:8px}
+.famrow{display:grid;gap:4px}
+.famrow .tpath{padding:4px 8px 8px}
+.famrow.on .fbub{border-color:var(--accent);background:var(--accent-soft)}
+.fbub{background:var(--surface)}
+.meal .facts .fact{font-size:.8rem}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -472,7 +510,8 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
 <div class="wrap">
   <header class="apphead">
     <div class="logo"><i><svg class="i" viewBox="0 0 24 24"><path d="M3 5h2l2.2 10.5h10.6L20 8H6.3"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg></i>Panier Protéiné</div>
-    <span class="free" id="syncChip">Gratuit, sans compte</span>
+    <span class="headr"><span class="free" id="syncChip">Gratuit, sans compte</span>
+      <span class="zoomctl" role="group" aria-label="Taille du texte"><button data-zoom="-1" aria-label="Réduire le texte">A−</button><button data-zoom="1" aria-label="Agrandir le texte">A+</button></span></span>
   </header>
 
   <section class="view" id="v-welcome" aria-label="Bienvenue" hidden></section>
@@ -583,7 +622,7 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
 </div></nav>
 <div id="sheetHost"></div>
 <div id="toastHost" aria-live="polite"></div>
-<button class="fab" data-coach aria-label="Ouvrir le coach"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>Coach</button>
+<button class="fab" data-coach aria-label="Ouvrir le coach"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><span class="sr">Coach</span></button>
 <div class="restpill" id="restPill" hidden role="timer" aria-live="off"><span>Repos</span><b>0:00</b><button data-sp="restskip">Passer</button></div>
 
 <script src="config.js"></script>
@@ -1182,7 +1221,6 @@ function renderPlan(){
      <h1>${exampleMode?"Bienvenue !":isToday?"Ta journée":cap1(DAYS[day])}</h1></div>
    ${exampleMode?`<div class="welcome"><h2>Voici une semaine d'exemple</h2><p>Elle est faite pour un étudiant de 72 kg qui veut prendre du muscle avec 40 € par semaine et mange au CROUS le midi en semaine. Réponds à quelques questions pour avoir la tienne.</p><button class="btn primary" data-wiz>Créer mon plan (2 min)</button></div>`:""}
    ${exampleMode?"":kcalCard()}
-   ${exampleMode?"":journalCard(day)}
    <div class="card">
      <div class="hero">
        <div class="ring" role="img" aria-label="${n0(dn.p)} grammes de protéines sur ${T.prot}">
@@ -1206,9 +1244,11 @@ function renderPlan(){
    ${all.kcal/7<T.kcal*.9?`<div class="alert"><span>Avec ${PATTERNS[profile.meals].length} repas par jour, les portions plafonnent à ${n0(all.kcal/7)} kcal sur ${n0(T.kcal)}. Ajoute un repas ou une collation pour couvrir tes besoins.</span></div>`:""}
    <div class="days" role="tablist" aria-label="Jour">${DAYS.map((d,i)=>{const c=profile.crous.days[i][0]||profile.crous.days[i][1],sp=(hasSport("street")&&(ws[i].done.length||ws[i].planned||ws[i].missed))||(rws&&(rws[i].done.length||rws[i].planned||rws[i].missed));return `<button role="tab" data-day="${i}" aria-selected="${i===day}" aria-label="${d} ${dateOf(i).getDate()}${c?", repas au CROUS":""}${sp?", séance de sport":""}"><span>${d.slice(0,3)}</span><b>${dateOf(i).getDate()}</b><span class="dots"><i class="${c?"c":""}"></i><i class="${sp?"s":""}"></i></span></button>`}).join("")}</div>
    <p class="note daylegend"><i class="lgd c"></i> CROUS <i class="lgd s"></i> Sport</p>
-   ${daySportHtml(day,ws,rws)}
+   ${profile.sports&&profile.sports.length?`<h2 class="sect">Sport</h2>`:""}${daySportHtml(day,ws,rws)}
+   <h2 class="sect">Repas</h2>
    <div class="meals">${dm.map(mealCard).join("")}</div>
-   <details class="nut"><summary>Nutriments de la journée</summary>
+   ${exampleMode?"":`<h2 class="sect">Ton suivi</h2>`+journalCard(day)}
+   <details class="nut nutday"><summary>Nutriments de la journée</summary>
      ${nrow(dn.p>=T.prot*.93?"g":dn.p>=T.pmin?"m":"b","Protéines",`cible ${T.prot} g, seuil utile ${T.pmin} g`,`${n0(dn.p)} g`,`${n0(dn.p/T.prot*100)} %`,pctBar(dn.p,T.prot,"min"))}
      ${nrow(band(pctE("carb"),40,55),"Glucides","repère : 40 à 55 % de l'énergie",`${n0(dn.carb)} g`,`${n0(pctE("carb"))} %`)}
      ${nrow(dn.sug<=90?"g":dn.sug<=110?"m":"b","dont sucres","repère : 90 g au maximum",`${n0(dn.sug)} g`,`${n0(dn.sug/90*100)} %`,pctBar(dn.sug,90,"max"))}
@@ -1220,7 +1260,7 @@ function renderPlan(){
      ${nrow(dn.ca>=T.ca?"g":dn.ca>=T.ca*.7?"m":"b","Calcium",`référence : ${T.ca} mg`,`${n0(dn.ca)} mg`,`${n0(dn.ca/T.ca*100)} %`,pctBar(dn.ca,T.ca,"min"))}
    </details>
    <button class="btn block" id="regen">Proposer d'autres recettes cette semaine</button>
-   <details class="nut fold"><summary>Comment c'est calculé</summary><div class="foldin"><p class="note">Protéines : cible de ${String(T.gkg).replace(".",",")} g par kg et par jour ; au-delà de 1,6 g/kg, le gain musculaire plafonne en moyenne (méta-analyse de Morton et al., 2018). Quand une journée est en dessous, le plan ajoute un complément riche en protéines à un repas et réduit la portion du plat d’autant. Énergie : formule de Mifflin-St Jeor × activité${profile.goal==="bulk"?", + 12 %":profile.goal==="cut"?", − 20 %":""}. Repères ANSES et OMS. Les repas CROUS sont estimés avec des portions de cantine type. Le fer des végétaux est moins bien absorbé que celui de la viande.</p></div></details>`;
+`;
 }
 
 function aggregate(){
@@ -1232,7 +1272,7 @@ function courseItems(){return Object.entries(aggregate()).map(([id,g])=>{const x
 function itemHtml(it){
   return `<div class="item ${checked.has(it.id)?"done":""}"><input type="checkbox" id="ck-${it.id}" data-ck="${it.id}" ${checked.has(it.id)?"checked":""}>
     <label class="n" for="ck-${it.id}">${esc(it.x.n)}<span class="q">${qty(it.id,it.g)} · ${it.np} × ${esc(it.x.pl)}</span></label>
-    <span class="pr"><span>${eur(it.g*it.pr.v/100)}</span>${srcTag(it.pr.src)}<button data-price="${it.id}" aria-label="Noter le prix : ${esc(it.x.n)}">Prix</button></span></div>`;
+    <button class="prbtn ${it.pr.src==="est"?"est":"you"}" data-price="${it.id}" aria-label="Modifier le prix : ${esc(it.x.n)}">${eur(it.g*it.pr.v/100)}<small>${it.pr.src==="est"?"estimé":STORES[it.pr.src].n}</small></button></div>`;
 }
 function renderCourses(){
   const v=document.getElementById("v-courses");
@@ -1809,7 +1849,7 @@ function spark(f){
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progression ${up?"en hausse":"en baisse"} sur les ${pts.length} dernières séances"><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xy[xy.length-1][0]}" cy="${xy[xy.length-1][1]}" r="3.5" fill="var(--accent)"/></svg>`;
 }
 function viewChips(){const L=spSport==="street"&&training?[["prog","Programme"],["tree","Arbre"],["stats","Progrès"]]:[["prog","Mon plan"]];if(SB)L.push(["friends","Amis"]);
-  return L.length>1?`<div class="chips" role="group" aria-label="Vue">${L.map(([k,l])=>chip("view",k,l,spView===k||(k==="prog"&&!L.some(x=>x[0]===spView)))).join("")}</div>`:""}
+  return L.length>1?`<div class="tabs2" role="tablist" aria-label="Vue">${L.map(([k,l])=>chip("view",k,l,spView===k||(k==="prog"&&!L.some(x=>x[0]===spView)))).join("")}</div>`:""}
 const chip=(attr,val,label,on)=>`<button class="chip" data-sp="${attr}" data-arg="${val}" aria-pressed="${!!on}">${label}</button>`;
 function exPreviewRow(e,i,all){
   const F=FAM[e.f],st=F.steps[e.lvl],u=unitOf(e.f),prev=all&&i>0?all[i-1].role:null,head=all&&e.role&&e.role!==prev?`<p class="blk">${BLOCKS[e.role][0]}</p>`:"";
@@ -1821,7 +1861,7 @@ function renderSport(){
   const S=profile.sports||[];
   if(!S.length){v.innerHTML=`<div class="hello"><h1>Sport</h1></div><div class="welcome"><p>Tu n'as pas choisi de sport. Active le street workout ou la course à pied dans ton profil pour avoir un programme adapté.</p><button class="btn primary sm" data-v="profil">Mon profil</button></div>`;return}
   if(!spSport||!S.includes(spSport))spSport=S[0];
-  const ssw=S.length>1?`<div class="chips sporttabs" role="group" aria-label="Sport">${S.map(k=>`<button class="chip" data-sport="${k}" aria-pressed="${spSport===k}">${k==="run"?"Course à pied":"Street workout"}</button>`).join("")}</div>`:"";
+  const ssw=S.length>1?`<div class="seg2 sporttabs" role="group" aria-label="Sport">${S.map(k=>`<button class="chip" data-sport="${k}" aria-pressed="${spSport===k}">${k==="run"?"Course à pied":"Street workout"}</button>`).join("")}</div>`:"";
   if(spView==="friends"&&!training?.cur){v.innerHTML=`<div class="hello"><p class="eyebrow">Communauté</p><h1>Amis</h1></div>`+ssw+viewChips()+friendsHtml();foldBoxes(v,["Confidentialité"]);return}
   if(spSport==="run"){renderRun(v,`<div class="hello"><p class="eyebrow">Course à pied</p><h1>${S.length>1?"Sport":"Course"}</h1></div>`+ssw+viewChips());return}
   const head=`<div class="hello"><p class="eyebrow">Street workout</p><h1>Sport</h1></div>`+ssw;
@@ -1835,7 +1875,7 @@ function renderSport(){
   const progFams=[...new Set(prog.flatMap(x=>x.f))];
   const tplChoices=prog.map(x=>x.key);
   v.innerHTML=`${head}${sw}${goalCard()}
-   ${hasSport("run")&&running&&running.prof.wd.length>=3?`<p class="note"><b>Programme hybride :</b> tu cours ${running.prof.wd.length} fois par semaine, donc le bloc jambes du street se limite aux ischios et fessiers (Nordic, hip thrust), qui protègent les coureurs. Tes sorties font le reste du travail des jambes.</p>`:""}
+   ${hasSport("run")&&running&&running.prof.wd.length>=3?`<p class="note"><b>Hybride :</b> tu cours ${running.prof.wd.length} fois par semaine, le bloc jambes se limite donc aux ischios et fessiers.</p>`:""}
    <div class="card"><div class="row" style="justify-content:space-between"><span class="k muted">Cette semaine</span><span><b>${wk}</b> <span class="muted">sur ${goal} séances</span></span></div>
     <div class="bar"><i class="${wk>=goal?"":"sun"}" style="width:${Math.min(100,wk/goal*100)}%"></i></div>
     <p class="note">${training.sessions.length} séance${training.sessions.length>1?"s":""} enregistrée${training.sessions.length>1?"s":""} au total.</p></div>
@@ -1866,7 +1906,7 @@ function renderSport(){
      <p>${GOALS[P.goal][0]}${P.goal==="fig"&&SKM[P.target]?` : <b>${esc(SKM[P.target].n)}</b>`:""} · ${sportDays().map(i=>DAYS[i].slice(0,3)).join(", ")}, ${P.dur} min · ${P.bars?"avec":"sans"} barres parallèles</p>
      <button class="btn primary block" data-sp="wedit">Modifier mon profil sport</button>
      <button class="btn sm ghost" data-sp="reset">Tout recommencer</button></div>
-   <p class="note">Méthode : double progression dans une fourchette de répétitions, ajustée selon les répétitions en réserve (échelle RIR). La fatigue fait baisser le nombre de séries, pas la difficulté. Repos de 2 à 3 min sur les exercices de force, 90 s ailleurs. Ces règles suivent les recommandations courantes en musculation et ne remplacent pas un avis médical en cas de douleur.</p>`;
+   <p class="note">Méthode : double progression selon tes répétitions en réserve ; la fatigue réduit le nombre de séries, pas la difficulté. En cas de douleur, demande un avis médical.</p>`;
   const meth=[...v.querySelectorAll(":scope > p.note")].pop();if(meth&&/^Méthode/.test(meth.textContent)){const b=document.createElement("div");b.className="box";b.innerHTML="<h3>La méthode</h3>";meth.replaceWith(b);b.appendChild(meth)}
   foldBoxes(v,["Après ta séance","Dans ton agenda","Tes niveaux","Historique","Réglages","La méthode"]);
 }
@@ -2016,8 +2056,9 @@ function treeHtml(){
    <div class="chips" role="group" aria-label="Affichage">${[["bubbles","Par branches"],["map","Carte complète"]].map(([k,l])=>`<button class="chip" data-tmode="${k}" aria-pressed="${treeMode===k}">${l}</button>`).join("")}</div>
    ${treeMode==="map"?`   <div class="legend">${["done","cur","open","lock"].map(k=>`<span class="lg"><span class="sk s-${k}"><svg class="i" viewBox="0 0 24 24">${SK_ICON[k]}</svg></span>${SK_TXT[k]} <b>${cnt(k)}</b></span>`).join("")}</div>
    <div class="chips" role="group" aria-label="Branche">${[["all","Tout l'arbre"],["tirage","Tirage et leviers"],["poussee","Poussée et équilibre"],["transitions","Transitions"],["gainage","Gainage"],["jambes","Jambes"]].map(([k,l])=>`<button class="chip" data-treef="${k}" aria-pressed="${treeFilter===k}">${l}</button>`).join("")}</div>
+   <div class="row"><span class="muted">Zoom</span><button class="btn sm ghost" data-tz="-1" aria-label="Dézoomer">−</button><button class="btn sm ghost" data-tz="1" aria-label="Zoomer">+</button></div>
    <div class="treewrap" id="treewrap" tabindex="0" aria-label="Arbre des figures, faire défiler dans les deux sens">
-     <div class="treecanvas" style="width:${W}px;height:${H}px">
+     <div class="treecanvas" style="width:${W}px;height:${H}px;zoom:${treeZoom}">
        ${bands}
        <svg class="edges" width="${W}" height="${H}" aria-hidden="true">${edges.join("")}</svg>
        ${cols.map((c,i)=>`<span class="colname" style="left:${PADX+i*CW}px;width:${CW}px;top:${H-PADB+8}px">${COLS[c]}</span>`).join("")}
@@ -2211,7 +2252,7 @@ const pctW=r=>(r>=0?"+":"−")+n1(Math.abs(r*100))+" %";
 function journalCard(i){
   if(i>todayIdx)return "";
   const d=jDay(i),j=jGet(d),wg=waterGoal(i),t=weightTrend();
-  return `<details class="nut journal"><summary>Ton suivi ${i===todayIdx?"du jour":"du "+DAYS[i]}${j.w||j.sh||j.wa?` <span class="tag you">${[j.w?"poids":"",j.sh?"sommeil":"",j.wa?"eau":""].filter(Boolean).join(", ")}</span>`:""}</summary>
+  return `<details class="nut journal" open><summary class="sr">Ton suivi</summary>
    <div class="jgrid">
     <div class="jrow"><span><b>Poids</b><small>${t&&t.avg7?`moyenne 7 jours : ${n1(t.avg7)} kg`:"pèse-toi le matin, à jeun"}</small></span>
       <span class="stepper"><input type="number" step="0.1" min="30" max="250" inputmode="decimal" id="j-w" data-j="w" value="${j.w??""}" placeholder="—" aria-label="Poids en kg"><em>kg</em></span></div>
@@ -2583,7 +2624,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-3";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-4";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3210,19 +3251,16 @@ const groupNodes=g=>g[0]==="figures"?SK.filter(x=>x.m):g[2].flatMap(f=>SK.filter
 function famNodes(f){return SK.filter(x=>x.l&&x.l[0]===f)}
 function treeBubbles(){
   const P=prof(),goalPath=P.goal==="fig"&&SKM[P.target]?new Set(pathTo(P.target)):new Set();
-  const grp=TGROUPS.map(g=>{const N=groupNodes(g),d=N.filter(skLearned).length,goal=N.some(x=>goalPath.has(x.id));
-    return `<button class="bub ${tOpenG===g[0]?"on":""}" data-tg="${g[0]}" aria-expanded="${tOpenG===g[0]}">${ringSvg(d/N.length)}<span class="bubn">${g[1]}</span><span class="bubc">${d}/${N.length}</span>${goal?`<span class="bubgoal" title="Sur le chemin de ton objectif">★</span>`:""}</button>`}).join("");
-  let panel="";
-  const g=TGROUPS.find(x=>x[0]===tOpenG);
-  if(g){
-    if(g[0]==="figures")panel=`<div class="tpanel"><h3>Transitions et figures à cocher</h3><p class="note">Elles ne font pas partie des séances automatiques : tu les travailles 10 min en début de séance, et tu les coches quand tu les tiens.</p>${stepList(SK.filter(x=>x.m).sort((a,b)=>a.t-b.t),goalPath)}</div>`;
-    else{
-      const fams=g[2].map(f=>{const N=famNodes(f),d=N.filter(skLearned).length,st=training.st[f],lk=famLocked(f),cur=FAM[f].steps[st.lvl];
-        return `<button class="fbub ${tOpenF===f?"on":""}" data-tf="${f}" aria-expanded="${tOpenF===f}">${ringSvg(d/N.length,lk?"lock":"")}<span><b>${FAM[f].n}</b><small>${lk?"Verrouillée":stepMastered(f,N.length-1)?"Terminée !":"En cours : "+esc(cur[4]||cur[0])}</small></span><span class="bubc">${d}/${N.length}</span></button>`}).join("");
-      panel=`<div class="tpanel"><div class="fbubs">${fams}</div>${tOpenF&&g[2].includes(tOpenF)?`<div class="tpath"><p class="note">${esc(FAM[tOpenF].cue)}</p>${stepList(famNodes(tOpenF),goalPath)}</div>`:`<p class="note">Touche un exercice pour voir toutes ses étapes.</p>`}</div>`;
-    }
-  }
-  return `<div class="bubs">${grp}</div>${panel||`<p class="note" style="text-align:center">Touche une bulle pour ouvrir la branche.</p>`}`;
+  return TGROUPS.map(g=>{const N=groupNodes(g),d=N.filter(skLearned).length;
+    let rows;
+    if(g[0]==="figures")rows=`<div class="famrow ${tOpenF==="__fig"?"on":""}"><button class="fbub" data-tf="__fig" aria-expanded="${tOpenF==="__fig"}">${ringSvg(d/N.length)}<span><b>Transitions et figures</b><small>Press to handstand, elbow lever, manna… à cocher à la main</small></span><span class="bubc">${d}/${N.length}</span></button>
+      ${tOpenF==="__fig"?stepList(N.slice().sort((a,b)=>a.t-b.t),goalPath):""}</div>`;
+    else rows=g[2].map(f=>{const M=famNodes(f),dd=M.filter(skLearned).length,st=training.st[f],lk=famLocked(f),cur=FAM[f].steps[st.lvl],nxt=FAM[f].steps[st.lvl+1],goal=M.some(x=>goalPath.has(x.id));
+      return `<div class="famrow ${tOpenF===f?"on":""}"><button class="fbub" data-tf="${f}" aria-expanded="${tOpenF===f}">${ringSvg(dd/M.length,lk?"lock":"")}
+        <span><b>${FAM[f].n}${goal?' <span class="tag g">objectif</span>':""}</b><small>${lk?"Verrouillé : maîtrise d'abord "+reqText(missingFor(f,st.lvl)):stepMastered(f,M.length-1)?"Branche terminée":`${esc(cur[4]||cur[0])}${nxt?` → ${esc(nxt[4]||nxt[0])}`:""}`}</small></span><span class="bubc">${dd}/${M.length}</span></button>
+        ${tOpenF===f?`<div class="tpath">${stepList(M,goalPath)}</div>`:""}</div>`}).join("");
+    return `<section class="tgroup"><h2 class="sect">${g[1]} <span class="muted">${d}/${N.length}</span></h2>${rows}</section>`}).join("")
+   +`<p class="note" style="text-align:center">Touche un exercice pour voir toutes ses étapes.</p>`;
 }
 function stepList(nodes,goalPath){
   return `<ol class="steps">${nodes.map(x=>{const s=skState(x),miss=x.m?[]:missingFor(x.l[0],x.l[1]),st=x.m?null:FAM[x.l[0]].steps[x.l[1]];
@@ -3232,19 +3270,12 @@ function stepList(nodes,goalPath){
 }
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
   if(d.tg){tOpenG=tOpenG===d.tg?null:d.tg;tOpenF=null;const g=TGROUPS.find(x=>x[0]===tOpenG);if(g&&g[2].length){const P=prof();tOpenF=g[2].find(f=>goalFams().includes(f))||g[2].find(f=>!famLocked(f))||g[2][0]}renderSport()}
-  else if(d.tf){tOpenF=tOpenF===d.tf?null:d.tf;renderSport()}
+  else if(d.tf){tOpenF=tOpenF===d.tf?null:d.tf;const y=t.getBoundingClientRect().top;renderSport();const n=document.querySelector(`[data-tf="${d.tf}"]`);if(n)window.scrollBy(0,n.getBoundingClientRect().top-y)}
   else if(d.tmode){treeMode=d.tmode;renderSport();if(treeMode==="map")requestAnimationFrame(focusTree)}});
 
 /* ===================== Decluttering: secondary sections fold away ===================== */
 const openFolds=new Set();
-function foldBoxes(root,titles){
-  root.querySelectorAll(":scope > .box").forEach(b=>{const h=b.querySelector(":scope > h3");if(!h)return;const t=h.textContent.trim();
-    if(!titles.some(x=>t.startsWith(x)))return;
-    const d=document.createElement("details");d.className="nut fold";if(openFolds.has(t))d.open=true;
-    const s=document.createElement("summary");s.textContent=t;d.appendChild(s);const inner=document.createElement("div");inner.className="foldin";
-    h.remove();while(b.firstChild)inner.appendChild(b.firstChild);d.appendChild(inner);b.replaceWith(d);
-    d.addEventListener("toggle",()=>{d.open?openFolds.add(t):openFolds.delete(t)})});
-}
+function foldBoxes(){}
 
 /* ===================== Friends (Strava-like feed) through Supabase ===================== */
 let social={me:null,friends:[],pending:[],feed:[],kudos:{},loaded:false,err:null};
@@ -3331,6 +3362,14 @@ document.addEventListener("click",async e=>{const t=e.target.closest("[data-fr]"
 document.addEventListener("change",async e=>{if(e.target.id!=="fr-share")return;try{await sbq("social_profiles","PATCH",`?user_id=eq.${sbSession.uid}`,{share:e.target.checked},"return=minimal");social.me.share=e.target.checked;toast(e.target.checked?"Partage activé.":"Partage désactivé.")}catch(err){toast(err.message)}});
 
 document.addEventListener("click",e=>{const t=e.target.closest('[data-sp="view"]');if(t&&t.dataset.arg==="friends"){social.loaded=false;socialLoad()}});
+let treeZoom=1;
+let uiZoom=(()=>{try{return +localStorage.getItem("pp_zoom")||1}catch(e){return 1}})();
+function applyZoom(){const h=document.documentElement;h.style.setProperty("--z",uiZoom);h.classList.toggle("bigtext",uiZoom>=1.2)}
+applyZoom();
+document.addEventListener("click",e=>{const t=e.target.closest("[data-zoom],[data-tz]");if(!t)return;
+  if(t.dataset.zoom){uiZoom=Math.round(Math.min(1.4,Math.max(.85,uiZoom+.1*t.dataset.zoom))*100)/100;try{localStorage.setItem("pp_zoom",uiZoom)}catch(e){}applyZoom();toast(`Taille du texte : ${Math.round(uiZoom*100)} %`)}
+  else{treeZoom=Math.min(1.6,Math.max(.4,treeZoom+.2*t.dataset.tz));const c=document.querySelector(".treecanvas");if(c)c.style.zoom=treeZoom}});
+new MutationObserver(()=>document.querySelectorAll("details.nut:not([open])").forEach(d=>d.open=true)).observe(document.body,{childList:true,subtree:true});
 const LS=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const firstRun=LS("pp_onboarding")==="1"||(!saved&&!training&&!running&&!LS("pp_onboarded"));
 if(!(saved&&saved.sports))profile.sports=[training&&"street",running&&"run"].filter(Boolean);
