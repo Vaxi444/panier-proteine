@@ -594,11 +594,8 @@ nav.tabbar button[aria-selected="true"] svg{background:var(--accent-soft);border
         </div>
       </fieldset>
       <fieldset><legend>Tes magasins</legend>
-        <div class="seg">
-          <label><input type="checkbox" name="st_lidl" id="st_lidl"><span>Lidl</span></label>
-          <label><input type="checkbox" name="st_leclerc" id="st_leclerc"><span>Leclerc</span></label>
-        </div>
-        <p class="hint">Les prix que tu relèves dans ces magasins remplacent les estimations.</p>
+        <div class="seg" id="storeSeg"></div>
+        <p class="hint">Coche ceux où tu fais tes courses. Les estimations suivent le plus abordable d'entre eux (écarts de prix UFC-Que Choisir), et les prix que tu relèves les remplacent.</p>
       </fieldset>
       <div class="wiz-nav" id="wizNav" hidden>
         <button class="btn" type="button" id="wizPrev">Retour</button>
@@ -933,7 +930,22 @@ const PATTERNS={
 };
 const MAXREP={matin:3,plat:2,collation:4};
 const DAYS=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
-const STORES={lidl:{n:"Lidl",url:"https://www.lidl.fr/"},leclerc:{n:"Leclerc",url:"https://www.leclercdrive.fr/"}};
+const STORES={
+  lidl:{n:"Lidl",idx:.98,url:"https://www.lidl.fr/"},
+  aldi:{n:"Aldi",idx:1.02,url:"https://www.aldi.fr/"},
+  leclerc:{n:"Leclerc",idx:1,url:"https://www.leclercdrive.fr/"},
+  intermarche:{n:"Intermarché",idx:1.04,url:"https://www.intermarche.com/"},
+  superu:{n:"Super U / Hyper U",idx:1.045,url:"https://www.coursesu.com/"},
+  carrefour:{n:"Carrefour",idx:1.07,url:"https://www.carrefour.fr/"},
+  auchan:{n:"Auchan",idx:1.1,url:"https://www.auchan.fr/"},
+  netto:{n:"Netto",idx:null,url:"https://www.netto.fr/"},
+  casino:{n:"Casino / Géant",idx:null,url:"https://www.casino.fr/"},
+  monoprix:{n:"Monoprix",idx:null,url:"https://www.monoprix.fr/"},
+  franprix:{n:"Franprix",idx:null,url:"https://www.franprix.fr/"},
+  grandfrais:{n:"Grand Frais",idx:null,url:"https://www.grandfrais.com/"},
+  biocoop:{n:"Biocoop",idx:null,url:"https://www.biocoop.fr/"}};
+/* EUR26 averages mix discount, Leclerc and Carrefour shelves: about 1.02 × the Leclerc level */
+const EST_BASE=1.02;
 const DEFAULT_CROUS={price:1,plate:"viande",p1:"laitage",p2:"crudites",days:[[1,0],[1,0],[1,0],[1,0],[1,0],[0,0],[0,0]]};
 const DEFAULT={sex:"m",age:22,height:178,weight:72,activity:"1.55",goal:"bulk",meals:"3",budget:40,diet:"omni",noegg:false,nodairy:false,nofish:false,whey:false,gourmand:true,st_lidl:true,st_leclerc:true,crous:DEFAULT_CROUS};
 
@@ -954,10 +966,15 @@ const dateOf=i=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d
 /* ===================== Prices ===================== */
 function activeStores(){return Object.keys(STORES).filter(s=>profile["st_"+s])}
 function storePrice(id,s){const e=prices[id]&&prices[id][s];return e&&e.eur>0&&e.g>0?e.eur/e.g*100:null}
+function estStore(s){const i=STORES[s].idx;return i==null?null:i/EST_BASE}
 function price(id){
   let best=null,src="est";
-  for(const s of activeStores()){const v=storePrice(id,s);if(v!=null&&(best==null||v<best)){best=v;src=s}}
-  return best==null?{v:ING[id].eur,src:"est"}:{v:best,src};
+  const st=activeStores();
+  for(const s of st){const v=storePrice(id,s);if(v!=null&&(best==null||v<best)){best=v;src=s}}
+  if(best!=null)return{v:best,src};
+  // no own price: national average scaled by the cheapest chosen store's published index
+  let es=null,f=1;for(const s of st){const k=estStore(s);if(k!=null&&(es==null||k<f)){es=s;f=k}}
+  return{v:ING[id].eur*f,src:"est",es};
 }
 const rCost=r=>r.i.reduce((a,[id,g])=>a+price(id).v*g/100,0);
 
@@ -1272,7 +1289,7 @@ function courseItems(){return Object.entries(aggregate()).map(([id,g])=>{const x
 function itemHtml(it){
   return `<div class="item ${checked.has(it.id)?"done":""}"><input type="checkbox" id="ck-${it.id}" data-ck="${it.id}" ${checked.has(it.id)?"checked":""}>
     <label class="n" for="ck-${it.id}">${esc(it.x.n)}<span class="q">${qty(it.id,it.g)} · ${it.np} × ${esc(it.x.pl)}</span></label>
-    <button class="prbtn ${it.pr.src==="est"?"est":"you"}" data-price="${it.id}" aria-label="Modifier le prix : ${esc(it.x.n)}">${eur(it.g*it.pr.v/100)}<small>${it.pr.src==="est"?"estimé":STORES[it.pr.src].n}</small></button></div>`;
+    <button class="prbtn ${it.pr.src==="est"?"est":"you"}" data-price="${it.id}" aria-label="Modifier le prix : ${esc(it.x.n)}">${eur(it.g*it.pr.v/100)}<small>${it.pr.src==="est"?"estimé"+(it.pr.es&&courseMode!=="magasin"?" · "+STORES[it.pr.es].n:""):STORES[it.pr.src].n}</small></button></div>`;
 }
 function renderCourses(){
   const v=document.getElementById("v-courses");
@@ -1283,8 +1300,9 @@ function renderCourses(){
   if(courseMode==="rayon"){
     body=AISLES.map((a,ai)=>{const L=items.filter(it=>it.x.a===ai).sort((p,q)=>p.x.n.localeCompare(q.x.n));return L.length?`<div class="aisle"><span>${a}</span></div>${L.map(itemHtml).join("")}`:""}).join("");
   }else{
-    const groups=[...st.map(s=>({k:s,n:"Chez "+STORES[s].n})),{k:"est",n:"Prix encore à relever"}];
-    body=groups.map(gp=>{const L=items.filter(it=>it.pr.src===gp.k).sort((p,q)=>p.x.a-q.x.a||p.x.n.localeCompare(q.x.n));
+    const where=it=>it.pr.src!=="est"?it.pr.src:it.pr.es||"est";
+    const groups=[...st.map(s=>({k:s,n:"Chez "+STORES[s].n})),{k:"est",n:"Magasin au choix"}];
+    body=groups.map(gp=>{const L=items.filter(it=>where(it)===gp.k).sort((p,q)=>p.x.a-q.x.a||p.x.n.localeCompare(q.x.n));
       const sub=L.reduce((a,it)=>a+it.np*it.x.pack*it.pr.v/100,0);
       return L.length?`<div class="aisle"><span>${gp.n}</span><span>${gp.k==="est"?"":eur(sub)}</span></div>${L.map(itemHtml).join("")}`:""}).join("");
   }
@@ -1293,28 +1311,28 @@ function renderCourses(){
     <p class="muted">${left} produit${left>1?"s":""} à acheter${all.crousN?`. Tes ${all.crousN} repas au CROUS ne sont pas dans la liste.`:"."}</p>
     <div class="chips" role="group" aria-label="Classer la liste">
       <button class="chip" data-mode="rayon" aria-pressed="${courseMode==="rayon"}">Par rayon</button>
-      <button class="chip" data-mode="magasin" aria-pressed="${courseMode==="magasin"}">Par magasin</button><button class="chip" data-v="prix">Mes prix Lidl et Leclerc</button><button class="chip" data-receipt>Scanner un ticket</button><button class="chip" data-scan>Scanner une étiquette</button></div>
-    ${courseMode==="magasin"&&!known?`<div class="welcome"><p>Note quelques prix à ${st.map(s=>STORES[s].n).join(" ou ")} avec le bouton « Prix ». Chaque produit ira ensuite vers le magasin le moins cher.</p></div>`:""}
+      <button class="chip" data-mode="magasin" aria-pressed="${courseMode==="magasin"}">Par magasin</button><button class="chip" data-v="prix">Mes prix</button><button class="chip" data-receipt>Scanner un ticket</button><button class="chip" data-scan>Scanner une étiquette</button></div>
+    ${!st.length?`<div class="alert"><span>Choisis tes magasins dans ton profil pour des prix plus justes.</span></div>`:courseMode==="magasin"&&!known?`<div class="welcome"><p>${st.length>1?"Sans prix relevé, tout va au magasin le moins cher d'après les comparatifs nationaux.":"Les prix sont estimés pour "+STORES[st[0]].n+"."} Touche un prix pour noter le tien : chaque produit ira ensuite là où tu l'as vu le moins cher.</p></div>`:""}
     <div class="list">${body}
      <div class="tot"><span>Consommé dans la semaine</span><span>${eur(est)}</span></div>
      <div class="tot light"><span>À payer en caisse (paquets entiers)</span><span>${eur(packTotal)}</span></div>
      <div class="tot light"><span>Prix relevés par toi</span><span>${known} sur ${items.length}</span></div>
     </div>
     <div class="row">${(courseMode==="magasin"?st:[null]).map(s=>`<button class="btn" data-copy="${s||"all"}">Copier ${s?"la liste "+STORES[s].n:"la liste"}</button>`).join("")}<button class="btn ghost" id="uncheck">Tout décocher</button></div>
-    <div class="row">${st.map(s=>`<a class="btn sm ghost" href="${STORES[s].url}" target="_blank" rel="noopener">${s==="leclerc"?"Ouvrir Leclerc Drive":"Voir les promos Lidl"}</a>`).join("")}</div>
-    <p class="note">Les prix « estimé » sont des moyennes nationales, à 15 ou 25 % près. Le reste des paquets entiers sert la semaine suivante. Sel, poivre, épices et ail ne sont pas comptés.</p>`;
+    <div class="row">${st.map(s=>`<a class="btn sm ghost" href="${STORES[s].url}" target="_blank" rel="noopener">Site ${STORES[s].n}</a>`).join("")}</div>
+    <p class="note">Les prix « estimé » sont des moyennes nationales 2026 ajustées à l'enseigne, à 15 ou 25 % près. Le reste des paquets entiers sert la semaine suivante. Sel, poivre, épices et ail ne sont pas comptés.</p>`;
 }
 function renderPrix(){
   const v=document.getElementById("v-prix"),st=activeStores();
   const used=plan.error?new Set():new Set(Object.keys(aggregate()));
   const ids=Object.keys(ING).sort((a,b)=>(used.has(b)-used.has(a))||ING[a].a-ING[b].a||ING[a].n.localeCompare(ING[b].n));
   const fmtKg=(x,id)=>ING[id].unit?`${eur(x*ING[id].unit/100)} / ${ING[id].un}`:`${eur(x*10)} / kg`;
-  v.innerHTML=`<button class="btn sm ghost" data-v="courses" style="justify-self:start">← Retour aux courses</button><div class="hello"><p class="eyebrow">Lidl et Leclerc</p><h1>Mes prix</h1></div>
+  v.innerHTML=`<button class="btn sm ghost" data-v="courses" style="justify-self:start">← Retour aux courses</button><div class="hello"><p class="eyebrow">${st.length?st.map(s=>STORES[s].n).join(", "):"Tes magasins"}</p><h1>Mes prix</h1></div>
     <div class="welcome"><p>Quand tu fais tes courses, note le prix d'un produit (sur l'étiquette ou le ticket). Le plan prend ensuite le prix le plus bas que tu as relevé, et ton budget devient exact.</p></div>
-    ${!st.length?`<div class="alert"><span>Aucun magasin choisi. Coche Lidl ou Leclerc dans ton profil.</span></div>`:""}
+    ${!st.length?`<div class="alert"><span>Aucun magasin choisi. Coche tes magasins dans ton profil.</span></div>`:""}
     <div class="plist">${ids.map(id=>{const x=ING[id],best=price(id);
       return `<button class="prow" data-price="${id}"><span><b>${esc(x.n)}</b>${used.has(id)?"":` <span class="tag">pas cette semaine</span>`}</span><span>${fmtKg(best.v,id)}</span>
-      <span class="meta">${st.map(s=>{const p=storePrice(id,s);return `<span>${STORES[s].n} : ${p==null?"pas relevé":(best.src===s?"<b>":"")+fmtKg(p,id)+(best.src===s?"</b>":"")}</span>`}).join("")}<span>Moyenne 2026 : ${fmtKg(x.eur,id)}</span>${st.map(s2=>prices[id]&&prices[id][s2]&&prices[id][s2].d?`<span>relevé le ${new Date(prices[id][s2].d+"T12:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</span>`:"").join("")}</span></button>`}).join("")}</div>
+      <span class="meta">${st.map(s=>{const p=storePrice(id,s);return `<span>${STORES[s].n} : ${p==null?"pas relevé":(best.src===s?"<b>":"")+fmtKg(p,id)+(best.src===s?"</b>":"")}</span>`}).join("")}<span>Estimé 2026${best.es?" ("+STORES[best.es].n+")":""} : ${fmtKg(best.src==="est"?best.v:x.eur,id)}</span>${st.map(s2=>prices[id]&&prices[id][s2]&&prices[id][s2].d?`<span>relevé le ${new Date(prices[id][s2].d+"T12:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</span>`:"").join("")}</span></button>`}).join("")}</div>
     <button class="btn primary" data-receipt>Scanner un ticket de caisse</button>
     <button class="btn" data-scan>Scanner une étiquette</button>
     <button class="btn ghost" id="resetPrices">Effacer tous mes prix</button>`;
@@ -1431,7 +1449,8 @@ function fillForm(){
   pf.activity.value=profile.activity;pf.meals.value=profile.meals;
   pf.querySelector(`#g-${profile.goal}`).checked=true;
   pf.querySelector(`#d-${profile.diet}`).checked=true;
-  ["noegg","nodairy","nofish","whey","gourmand","st_lidl","st_leclerc"].forEach(k=>pf[k].checked=!!profile[k]);
+  document.getElementById("storeSeg").innerHTML=Object.keys(STORES).map(k=>`<label><input type="checkbox" name="st_${k}" id="st_${k}"><span>${STORES[k].n}</span></label>`).join("");
+  ["noegg","nodairy","nofish","whey","gourmand",...Object.keys(STORES).map(k=>"st_"+k)].forEach(k=>pf[k].checked=!!profile[k]);
   pf.sp_street.checked=hasSport("street");pf.sp_run.checked=hasSport("run");
   const c=profile.crous;
   for(let i=0;i<7;i++)for(let j=0;j<2;j++)document.getElementById(`cr-${i}-${j}`).checked=!!c.days[i][j];
@@ -1444,7 +1463,7 @@ function readForm(){
   const days=[];for(let i=0;i<7;i++)days.push([0,1].map(j=>document.getElementById(`cr-${i}-${j}`).checked?1:0));
   const pr=parseFloat(String(document.getElementById("cr-price").value).replace(",","."));
   return{sex:fd.get("sex")||"m",age:+pf.age.value||25,height:+pf.height.value||175,weight:+pf.weight.value||70,activity:pf.activity.value,goal:fd.get("goal")||"bulk",meals:pf.meals.value,budget:+pf.budget.value||30,diet:fd.get("diet")||"omni",
-    sports:[pf.sp_street.checked&&"street",pf.sp_run.checked&&"run"].filter(Boolean),noegg:pf.noegg.checked,nodairy:pf.nodairy.checked,nofish:pf.nofish.checked,whey:pf.whey.checked,gourmand:pf.gourmand.checked,st_lidl:pf.st_lidl.checked,st_leclerc:pf.st_leclerc.checked,
+    sports:[pf.sp_street.checked&&"street",pf.sp_run.checked&&"run"].filter(Boolean),noegg:pf.noegg.checked,nodairy:pf.nodairy.checked,nofish:pf.nofish.checked,whey:pf.whey.checked,gourmand:pf.gourmand.checked,...Object.fromEntries(Object.keys(STORES).map(k=>["st_"+k,!!(pf["st_"+k]&&pf["st_"+k].checked)])),
     crous:{price:isFinite(pr)&&pr>=0?pr:1,plate:document.getElementById("cr-plate").value,p1:document.getElementById("cr-p1").value,p2:document.getElementById("cr-p2").value,days}};
 }
 function hint(){const T=targets(readForm());document.getElementById("targetsHint").textContent=`Tes besoins estimés : environ ${n0(T.kcal)} kcal et ${T.prot} g de protéines par jour.`}
@@ -2624,7 +2643,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-10-31-4";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-01-1";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3133,7 +3152,7 @@ function renderWelcome(mode){
   else v.innerHTML=`<div class="wl"><div class="wllogo">${LOGO_BIG}</div>
      <h1>Panier Protéiné</h1><p class="wlsub">Tes repas protéinés dans ton budget, et un programme de sport qui s'adapte à toi.</p>
      <ul class="wlfeat">
-       <li><b>Plan repas et courses</b><span>Recettes, CROUS, prix Lidl et Leclerc</span></li>
+       <li><b>Plan repas et courses</b><span>Recettes, CROUS, prix de ton magasin</span></li>
        <li><b>Street workout et course à pied</b><span>Séances qui progressent avec toi, arbre de figures</span></li>
        <li><b>Coach et suivi</b><span>Poids, sommeil, tests de force</span></li></ul>
      <button class="btn primary block" data-wl="start">Commencer</button>
@@ -3188,12 +3207,12 @@ async function visionJSON(prompt,file){
 /* ===================== Receipt scanning: a photo of the till receipt updates store prices ===================== */
 let rcpt={state:"idle",lines:[],store:null,err:null};
 function rcptPrompt(){
-  return `Cette photo est un ticket de caisse d'un supermarché français (souvent Lidl ou E.Leclerc). Lis chaque ligne d'article alimentaire.
+  return `Cette photo est un ticket de caisse d'un supermarché français (par exemple Lidl, Aldi, E.Leclerc, Carrefour, Intermarché, Auchan, Super U, Monoprix). Lis chaque ligne d'article alimentaire.
 Pour chaque ligne, donne : "libelle" (texte du ticket), "prix_eur" (montant total payé pour la ligne, remises déduites si une ligne de remise suit), "quantite_g" (poids ou volume net TOTAL de la ligne en grammes ou millilitres, déduit du libellé : "500G", "1KG", "4X125G", "X2", "6 OEUFS" = 6 × 60 g, "1L" = 1000 ; pour les articles au poids, le poids pesé ; null si impossible), "ingredient" (l'identifiant de la liste ci-dessous qui correspond le mieux au produit, ou null si aucun ne correspond vraiment).
 Ignore les lignes non alimentaires, sacs, consignes, sous-totaux et moyens de paiement.
 Liste des ingrédients (identifiant : nom) :
 ${Object.keys(ING).map(id=>`${id} : ${ING[id].n}`).join("\n")}
-Réponds uniquement avec ce JSON : {"magasin":"lidl"|"leclerc"|null,"date":"AAAA-MM-JJ"|null,"lignes":[{"libelle":string,"prix_eur":number,"quantite_g":number|null,"ingredient":string|null}]}. N'invente aucune ligne.`;
+Réponds uniquement avec ce JSON : {"magasin":${Object.keys(STORES).map(k=>`"${k}"`).join("|")}|null,"date":"AAAA-MM-JJ"|null,"lignes":[{"libelle":string,"prix_eur":number,"quantite_g":number|null,"ingredient":string|null}]}. N'invente aucune ligne.`;
 }
 function rcptHtml(){
   const st=activeStores(),R=rcpt;
@@ -3218,7 +3237,7 @@ function rcptHtml(){
    ${R.err?`<div class="alert"><span>${esc(R.err)}</span></div>`:""}${body}`;
 }
 const fmtUnit=(per100,id)=>ING[id].unit?`${eur(per100*ING[id].unit/100)} / ${ING[id].un}`:`${eur(per100*10)} / kg`;
-function openReceipt(){rcpt={state:"idle",lines:[],store:activeStores()[0]||null,err:null};if(!activeStores().length){toast("Choisis d'abord Lidl ou Leclerc dans ton profil.");return}openSheet(null,rcptHtml(),"Scanner un ticket")}
+function openReceipt(){rcpt={state:"idle",lines:[],store:activeStores()[0]||null,err:null};if(!activeStores().length){toast("Choisis d'abord tes magasins dans ton profil.");return}openSheet(null,rcptHtml(),"Scanner un ticket")}
 function rerenderRcpt(){const b=document.querySelector(".sheet .body");if(b)b.innerHTML=rcptHtml()}
 async function runReceipt(file){
   rcpt.state="busy";rcpt.err=null;rerenderRcpt();
