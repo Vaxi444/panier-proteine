@@ -476,6 +476,8 @@ h2.sect{font-family:var(--f-display);font-size:.8rem;font-weight:700;letter-spac
 .famrow.on .fbub{border-color:var(--accent);background:var(--accent-soft)}
 .fbub{background:var(--surface)}
 .meal .facts .fact{font-size:.8rem}
+.chips.wrap{flex-wrap:wrap;overflow:visible}
+.rcard{content-visibility:auto;contain-intrinsic-size:auto 260px}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -711,6 +713,29 @@ I("hachevege","Haché végétal au soja",3,[200,18,6,1,11,1.5,4,1.2,3,60],0,.90,
 I("tofusoyeux","Tofu soyeux",3,[55,5.5,1.5,.5,3,.5,.5,.01,1,100],0,.60,300,"bloc 300 g");
 I("blancoeuf","Blancs d'œufs liquides",3,[48,10.5,.7,.7,.2,0,0,.4,.1,7],0,.55,500,"brique 500 g",["egg"]);
 I("biscuit","Petits-beurre",6,[440,7,74,23,12,7.5,2.5,.8,1.5,60],0,.70,200,"paquet 200 g");
+I("crevettes","Crevettes cuites décortiquées surgelées",1,[95,21,0,0,1.2,.3,0,1,.5,70],0,1.60,400,"sachet 400 g",["fish"]);
+I("porc","Filet mignon ou longe de porc",2,[140,22,0,0,5.5,2,0,.15,.8,8],0,.95,500,"barquette 500 g",["meat","pork","red"],.75);
+I("lardons","Lardons fumés",2,[270,15,.5,.5,23,8.5,0,2.6,.7,8],0,1.10,200,"barquette 2 × 100 g",["meat","pork","red"],.8);
+I("chorizo","Chorizo",2,[450,24,2,1,38,14,0,4,1.5,15],0,1.60,100,"paquet 100 g",["meat","pork","red"]);
+I("saumonfume","Saumon fumé",2,[180,22,0,0,10,2,0,3,.5,10],0,3.00,150,"paquet 4 tranches",["fish"]);
+I("surimi","Surimi",2,[100,8,14,5,1,.2,0,1.8,.3,10],0,.80,250,"paquet 250 g",["fish"]);
+I("parmesan","Parmesan râpé",3,[400,33,0,0,28,18,0,1.6,.3,1100],0,2.00,100,"sachet 100 g",["dairy"]);
+I("ricotta","Ricotta",3,[150,9,3,3,11,7,0,.3,.2,200],0,.90,250,"pot 250 g",["dairy"]);
+I("chevre","Bûche de chèvre",3,[300,18,1,1,25,17,0,1.3,.2,150],0,1.20,180,"bûche 180 g",["dairy"]);
+I("halloumi","Halloumi",3,[320,22,2,1.5,25,17,0,2.7,.2,700],0,1.50,225,"bloc 225 g",["dairy"]);
+I("pizza","Pâte à pizza",3,[260,7,45,2,5,1.5,2,1.3,1,15],0,.55,400,"rouleau 400 g");
+I("pesto","Pesto au basilic",4,[450,5,6,4,45,6,2,2.5,1,150],0,1.40,190,"pot 190 g",["dairy"]);
+I("nouilles","Nouilles de blé",4,[360,12,72,2,1.5,.3,3,.3,1.3,20],0,.45,250,"paquet 250 g",[],2.3);
+I("polenta","Polenta",4,[360,8,77,1,1.3,.2,3,0,1,5],0,.35,500,"paquet 500 g",[],4);
+I("hnoir","Haricots noirs (égouttés)",5,[115,7.5,15,.5,.5,.1,7,.5,2,40],1,.32,250,"boîte 400 g");
+I("aubergine","Aubergines",0,[20,1,3,2.5,.2,0,2.5,0,.3,9],1,.35,500,"pièce ~400 g");
+I("poireau","Poireaux",0,[27,1.5,3.5,2.5,.3,0,3,0,.8,40],1,.30,1000,"botte 1 kg");
+I("butternut","Courge butternut",0,[40,1,8,3,.1,0,2,0,.6,40],1,.25,1200,"pièce ~1,2 kg");
+I("chourouge","Chou rouge",0,[30,1.4,5,4,.2,0,2.5,0,.5,40],1,.25,1000,"pièce ~1 kg");
+I("orange","Oranges",0,[45,1,9,9,.2,0,2,0,.1,40],1,.25,1500,"filet 1,5 kg",[],1,150,"orange");
+I("mangue","Mangue surgelée en dés",1,[65,.7,14,13,.3,.1,1.6,0,.2,10],1,.55,500,"sachet 500 g");
+I("noix","Cerneaux de noix",6,[700,15,7,3,65,6,6,0,2.5,90],1,1.80,200,"sachet 200 g");
+I("amandes","Amandes",6,[620,21,9,4,52,4,12,0,3.7,250],1,1.60,200,"sachet 200 g");
 
 /* Recipes: grams for one base portion */
 /* 2026 average shelf prices (€/100 g) from Aldi, Lidl, Leclerc and Carrefour price surveys and Open Prices
@@ -851,17 +876,371 @@ const RECIPES=[
  {id:"barres",type:"collation",g:1,sweet:1,n:"Barre maison avoine cacahuète",i:[["avoine",40],["bcac",20],["miel",10],["chocnoir",10]],s:["Mélanger avoine, beurre de cacahuète et miel tiède.","Tasser dans un plat, couvrir de chocolat fondu.","1 h au frigo, couper en barres. Se garde une semaine."]},
  {id:"cookies",type:"collation",g:1,sweet:1,n:"Cookies banane avoine",i:[["banane",60],["avoine",40],["oeuf",30],["chocnoir",10]],s:["Écraser la banane, mélanger avec l'œuf et l'avoine.","Ajouter les pépites de chocolat, former des cookies.","12 min au four à 180 °C."]},
 ];
+/* ===================== Generated recipe families ===================== */
+/* ===================== Recipe families =====================
+   Each family is a classic dish template; protein and vegetable variants are listed explicitly
+   so every combination is one a cook would actually make. Grams are for one base portion. */
+function genRecipes(){
+  const out=[];
+  const merge=items=>{const m=new Map();items.forEach(([id,g])=>{if(g>0)m.set(id,(m.get(id)||0)+g)});return[...m.entries()]};
+  const add=(type,id,n,items,s,o={})=>out.push({type,id:"x_"+id,n,i:merge(items),s,...o});
+  const P={
+    poulet:{i:[["poulet",150]],au:"au poulet",de:"de poulet",c:"Couper le poulet en morceaux et le saisir 6 à 7 min dans l'huile"},
+    dinde:{i:[["dinde",150]],au:"à la dinde",de:"de dinde",c:"Couper la dinde en lanières et la saisir 5 min dans l'huile"},
+    cuisse:{i:[["cuisse",170]],au:"aux hauts de cuisse",de:"de poulet",c:"Saisir les hauts de cuisse 4 min par face"},
+    boeuf:{i:[["boeuf",130]],au:"au bœuf",de:"de bœuf",c:"Dorer le bœuf haché 5 min en l'émiettant"},
+    porc:{i:[["porc",140]],au:"au porc",de:"de porc",c:"Couper le porc en lamelles et le saisir 6 min"},
+    crevettes:{i:[["crevettes",150]],au:"aux crevettes",de:"de crevettes",c:"Saisir les crevettes 2 à 3 min avec une gousse d'ail"},
+    saumon:{i:[["saumon",125]],au:"au saumon",de:"de saumon",c:"Cuire le saumon 4 min par face puis l'effeuiller"},
+    colin:{i:[["colin",170]],au:"au colin",de:"de colin",c:"Cuire le colin 6 à 8 min à la poêle couverte"},
+    thon:{i:[["thon",120]],au:"au thon",de:"de thon",c:"Égoutter et émietter le thon"},
+    tofu:{i:[["tofu",180]],au:"au tofu",de:"de tofu",c:"Couper le tofu en dés et le dorer 8 min dans l'huile"},
+    tempeh:{i:[["tempeh",150]],au:"au tempeh",de:"de tempeh",c:"Couper le tempeh en tranches et le dorer 3 min par face"},
+    pst:{i:[["pst",60]],au:"au soja texturé",de:"de soja texturé",c:"Réhydrater les protéines de soja 10 min dans l'eau bouillante avec un trait de sauce soja, les presser puis les dorer 5 min"},
+    hachevege:{i:[["hachevege",150]],au:"au haché végétal",de:"de haché végétal",c:"Dorer le haché végétal 5 min"},
+    pchiche:{i:[["pchiche",220]],au:"aux pois chiches",de:"de pois chiches",c:"Rincer les pois chiches et les faire revenir 5 min avec les épices"},
+    lentille:{i:[["lentille",80]],au:"aux lentilles",de:"de lentilles",c:"Cuire les lentilles 20 min dans l'eau frémissante"},
+    oeuf:{i:[["oeuf",120]],au:"aux œufs",de:"d'œufs",c:"Cuire les œufs 6 min dans l'eau bouillante et les écaler"},
+    halloumi:{i:[["halloumi",100]],au:"au halloumi",de:"de halloumi",c:"Griller le halloumi en tranches 2 min par face"},
+    jambon:{i:[["jambon",100]],au:"au jambon",de:"de jambon",c:"Couper le jambon en lanières"},
+    hnoir:{i:[["hnoir",220]],au:"aux haricots noirs",de:"de haricots noirs",c:"Rincer les haricots noirs et les réchauffer avec cumin et paprika"},
+    edamame:{i:[["edamame",150]],au:"aux edamames",de:"d'edamames",c:"Cuire les edamames 3 min à l'eau bouillante"},
+  };
+  const G=new Set(["boeuf","porc","halloumi"]); // richer variants count as gourmand in some families
+
+  // ---------- Bowls
+  const BOWLS={
+    teriyaki:{n:"Bowl teriyaki",p:["poulet","dinde","saumon","tofu","tempeh","porc","crevettes"],i:[["riz",90],["brocoli",150],["carotte",60],["soja",15],["miel",8],["huile",5]],
+      s:p=>["Cuire le riz. Cuire le brocoli 5 min à la vapeur et râper la carotte.",p.c+".","Ajouter sauce soja, miel, ail et gingembre, laisser caraméliser 2 min.","Servir sur le riz avec les légumes."]},
+    poke:{n:"Poké bowl",p:["saumon","thon","crevettes","tofu","poulet","surimi"],i:[["riz",90],["concombre",80],["edamame",60],["avocat",50],["carotte",50],["soja",15]],
+      s:p=>["Cuire le riz et le laisser tiédir.",p.c+".","Couper le concombre et l'avocat, râper la carotte, cuire les edamames 3 min.","Disposer sur le riz et arroser de sauce soja et d'un trait de vinaigre."]},
+    mexicain:{n:"Bowl mexicain",p:["poulet","boeuf","dinde","pst","hachevege","crevettes","tofu"],i:[["riz",80],["hnoir",100],["mais",60],["poivron",80],["tomate",60],["fblanc",40],["huile",5]],
+      s:p=>["Cuire le riz.",p.c+", avec cumin, paprika et origan.","Réchauffer les haricots noirs et le maïs, couper poivron et tomate en dés.","Servir sur le riz avec le fromage blanc citronné."]},
+    medit:{n:"Bowl méditerranéen",p:["poulet","dinde","thon","pchiche","halloumi","colin","crevettes"],i:[["boulgour",80],["concombre",80],["tomate",100],["feta",30],["huile",8]],
+      s:p=>["Cuire le boulgour 12 min.",p.c+", avec origan et citron.","Couper concombre et tomate, émietter la feta.","Assembler avec un filet d'huile d'olive et de citron."]},
+    thai:{n:"Bowl thaï coco",p:["poulet","crevettes","tofu","colin","dinde","pchiche"],i:[["riz",85],["coco",60],["poivron",80],["courgette",100],["bcac",10],["soja",10],["huile",5]],
+      s:p=>["Cuire le riz.",p.c+".","Ajouter poivron et courgette émincés, 5 min.","Verser le lait de coco, la sauce soja, le curry et le beurre de cacahuète, mijoter 5 min.","Servir sur le riz avec coriandre et citron vert."]},
+    libanais:{n:"Bowl libanais",p:["poulet","dinde","boeuf","halloumi","oeuf","tofu"],i:[["semoule",75],["pchiche",80],["concombre",80],["tomate",80],["yaourt",80],["huile",8]],
+      s:p=>["Verser de l'eau bouillante sur la semoule, couvrir 5 min puis égrainer.",p.c+", avec cumin, paprika et cannelle.","Réchauffer les pois chiches, couper concombre et tomate.","Servir avec une sauce yaourt, ail et menthe."]},
+    coreen:{n:"Bowl coréen",p:["boeuf","porc","poulet","tofu","tempeh"],i:[["riz",85],["chou",100],["carotte",60],["oeuf",60],["soja",15],["miel",5],["huile",5]],
+      s:p=>["Cuire le riz.",p.c+", puis ajouter sauce soja, miel, ail et piment.","Faire sauter le chou et la carotte émincés 4 min.","Servir sur le riz avec un œuf au plat et des graines de sésame."]},
+    cajun:{n:"Bowl cajun",p:["poulet","dinde","crevettes","saumon","pst"],i:[["patate",250],["hrouge",80],["mais",60],["poivron",80],["fblanc",40],["huile",8]],
+      s:p=>["Couper la patate douce en cubes et la rôtir 25 min à 210 °C avec la moitié de l'huile.",p.c+", avec paprika fumé, ail et thym.","Réchauffer haricots rouges et maïs avec le poivron.","Servir avec le fromage blanc au citron."]},
+    tikka:{n:"Bowl tikka",p:["poulet","dinde","pchiche","tofu","colin","halloumi"],i:[["riz",85],["yaourt",60],["tomconc",100],["epinard",100],["huile",5]],
+      s:p=>["Cuire le riz.",p.c+", avec garam masala, curcuma et paprika.","Ajouter les tomates et les épinards, mijoter 8 min.","Hors du feu, ajouter le yaourt. Servir sur le riz."]},
+    buddha:{n:"Buddha bowl",p:["tofu","oeuf","pchiche","saumon","poulet","tempeh","lentille"],i:[["quinoa",65],["patate",150],["salade",40],["carotte",60],["avocat",40],["huile",8]],
+      s:p=>["Cuire le quinoa 12 min. Rôtir la patate douce en cubes 25 min à 210 °C.",p.c+".","Râper la carotte, couper l'avocat.","Disposer sur la salade avec une sauce citron, huile et moutarde."]},
+  };
+  P.surimi={i:[["surimi",150]],au:"au surimi",de:"de surimi",c:"Couper le surimi en tronçons"};
+  for(const[k,b]of Object.entries(BOWLS))for(const pk of b.p){const p=P[pk];
+    add("plat",`bowl_${k}_${pk}`,`${b.n} ${p.au}`,[...p.i,...b.i],b.s(p),G.has(pk)?{g:1}:{})}
+
+  // ---------- Pasta
+  const PASTA={
+    bolo:{n:"Pâtes bolognaise",p:["boeuf","hachevege","pst","lentille","dinde","porc"],i:[["pates",100],["tomconc",150],["oignon",40],["carotte",40],["emmental",15],["huile",5]],
+      s:p=>["Faire revenir l'oignon et la carotte hachés 5 min.",p.c+".","Ajouter les tomates, l'origan et le laurier, mijoter 15 min.","Cuire les pâtes, servir avec la sauce et l'emmental."],g:1},
+    pesto:{n:"Pâtes au pesto",p:["poulet","crevettes","dinde","pchiche","saumon"],i:[["pates",100],["pesto",20],["tomate",80],["epinard",60]],
+      s:p=>["Cuire les pâtes.",p.c+".","Faire tomber les épinards 2 min dans la même poêle.","Mélanger les pâtes, le pesto, les tomates coupées et la protéine."]},
+    champi:{n:"Pâtes crème-champignons",p:["poulet","dinde","lardons","tofu","saumon","jambon"],i:[["pates",100],["champi",120],["creme",40],["oignon",30],["huile",5]],
+      s:p=>["Cuire les pâtes.",p.c+".","Faire dorer les champignons et l'oignon émincés 6 min.","Ajouter la crème et un peu d'eau de cuisson, poivrer, mélanger aux pâtes."],g:1},
+    ricotta:{n:"Pâtes citron, épinards et ricotta",p:["poulet","crevettes","saumon","thon"],i:[["pates",100],["epinard",120],["ricotta",60]],
+      s:p=>["Cuire les pâtes.",p.c+".","Faire tomber les épinards 3 min avec l'ail.","Mélanger avec la ricotta, le zeste et le jus d'un demi-citron et un peu d'eau de cuisson."]},
+    arrab:{n:"Penne all'arrabbiata",p:["thon","pchiche","crevettes","hblanc","poulet"],i:[["pates",100],["tomconc",150],["parmesan",10],["huile",5]],
+      s:p=>["Faire revenir ail et piment dans l'huile 1 min.","Ajouter les tomates, mijoter 10 min.",p.c+", puis l'ajouter à la sauce.","Mélanger aux pâtes, servir avec le parmesan."]},
+    courgette:{n:"Pâtes courgette-feta",p:["poulet","crevettes","pchiche","dinde"],i:[["pates",100],["courgette",150],["feta",30],["huile",5]],
+      s:p=>["Cuire les pâtes.",p.c+".","Faire sauter la courgette en demi-rondelles 6 min.","Mélanger avec la feta émiettée, la menthe et le citron."]},
+    poireau:{n:"Pâtes aux poireaux",p:["saumon","colin","poulet","jambon"],i:[["pates",100],["poireau",150],["creme",30],["huile",5]],
+      s:p=>["Faire fondre les poireaux émincés 10 min à feu doux.",p.c+".","Ajouter la crème, poivrer.","Mélanger avec les pâtes cuites."]},
+    brocoli:{n:"Pâtes brocoli-parmesan",p:["poulet","crevettes","thon","dinde","pchiche"],i:[["pates",100],["brocoli",150],["parmesan",15],["huile",5]],
+      s:p=>["Cuire le brocoli dans l'eau des pâtes, les égoutter ensemble.",p.c+".","Mélanger avec l'ail, le parmesan et un peu d'eau de cuisson."]},
+    norma:{n:"Pâtes à la sicilienne",p:["boeuf","pchiche","lentille","thon"],i:[["pates",100],["aubergine",150],["tomconc",120],["ricotta",40],["huile",8]],
+      s:p=>["Faire dorer l'aubergine en dés 10 min dans l'huile.",p.c+".","Ajouter les tomates, mijoter 10 min.","Mélanger aux pâtes et servir avec la ricotta."]},
+  };
+  P.lardons={i:[["lardons",60]],au:"aux lardons",de:"de lardons",c:"Faire dorer les lardons 4 min sans matière grasse"};
+  P.hblanc={i:[["hblanc",200]],au:"aux haricots blancs",de:"de haricots blancs",c:"Rincer les haricots blancs"};
+  for(const[k,b]of Object.entries(PASTA))for(const pk of b.p){const p=P[pk];
+    add("plat",`pasta_${k}_${pk}`,`${b.n} ${p.au}`,[...p.i,...b.i],b.s(p),b.g||G.has(pk)?{g:1}:{})}
+
+  // ---------- Curries
+  const VEG={epinard:["aux épinards",[["epinard",150]]],butternut:["à la butternut",[["butternut",180]]],choufleur:["au chou-fleur",[["choufleur",180]]],
+    ppois:["aux petits pois",[["ppois",120]]],aubergine:["à l'aubergine",[["aubergine",180]]],patate:["à la patate douce",[["patate",180]]],
+    courgette:["à la courgette",[["courgette",180]]],poivron:["aux poivrons",[["poivron",150]]],hverts:["aux haricots verts",[["hverts",150]]],tomate:["à la tomate",[["tomconc",200]]]};
+  const CUR=[["poulet","epinard","coco"],["poulet","butternut","coco"],["poulet","choufleur","tomate"],["poulet","ppois","tomate"],["poulet","poivron","coco"],
+    ["dinde","courgette","coco"],["dinde","patate","tomate"],["crevettes","courgette","coco"],["crevettes","poivron","coco"],["crevettes","butternut","coco"],["crevettes","ppois","tomate"],
+    ["pchiche","epinard","tomate"],["pchiche","patate","coco"],["pchiche","choufleur","coco"],["pchiche","aubergine","tomate"],["pchiche","butternut","coco"],
+    ["tofu","epinard","coco"],["tofu","poivron","coco"],["tofu","hverts","coco"],["colin","epinard","coco"],["colin","tomate","tomate"],
+    ["oeuf","epinard","tomate"],["oeuf","ppois","tomate"],["halloumi","epinard","tomate"],["halloumi","ppois","tomate"],["boeuf","ppois","tomate"],["hachevege","ppois","tomate"],
+    ["tempeh","butternut","coco"],["hnoir","patate","coco"],["edamame","courgette","coco"]];
+  for(const[pk,vk,base]of CUR){const p=P[pk],v=VEG[vk];
+    const sauce=base==="coco"?[["coco",80],["oignon",40]]:[["tomconc",vk==="tomate"?0:150],["yaourt",50],["oignon",40]];
+    add("plat",`curry_${pk}_${vk}`,`Curry ${p.de} ${v[0]}`,[...p.i,...v[1],...sauce,["riz",85],["huile",5]],
+      ["Cuire le riz.","Faire revenir l'oignon avec 2 c. à café de curry, du gingembre et de l'ail.",p.c+".",
+       base==="coco"?"Ajouter les légumes et le lait de coco, mijoter 12 min.":"Ajouter les légumes et les tomates, mijoter 12 min, puis le yaourt hors du feu.","Servir avec le riz."],G.has(pk)?{g:1}:{})}
+
+  // ---------- Wraps, tacos, kebabs
+  const WR={
+    cesar:{n:"Wrap César",p:["poulet","dinde","crevettes","tofu","oeuf"],i:[["tortilla",120],["salade",50],["parmesan",10],["fblanc",30]],
+      s:p=>[p.c+".","Mélanger le fromage blanc avec moutarde, citron et parmesan.","Garnir les tortillas de salade, de protéine et de sauce, rouler."]},
+    burrito:{n:"Burrito",p:["poulet","boeuf","pst","hachevege","dinde","crevettes","tofu"],i:[["tortilla",90],["riz",40],["hrouge",80],["mais",40],["cheddar",15],["tomate",50]],
+      s:p=>["Cuire le riz.",p.c+", avec cumin et paprika.","Réchauffer haricots et maïs.","Garnir les tortillas avec riz, haricots, protéine, tomate et cheddar, rouler serré et dorer 2 min à la poêle."],g:1},
+    tacos:{n:"Tacos",p:["poulet","boeuf","crevettes","colin","porc","tofu"],i:[["tortilla",120],["chourouge",60],["avocat",40],["fblanc",30],["huile",5]],
+      s:p=>[p.c+", avec paprika, cumin et citron vert.","Émincer finement le chou rouge, écraser l'avocat.","Garnir les tortillas chaudes, ajouter le fromage blanc et la coriandre."],g:1},
+    kebab:{n:"Pita kebab",p:["poulet","dinde","boeuf","halloumi","tofu"],i:[["pita",150],["salade",30],["tomate",60],["oignon",20],["yaourt",60],["huile",5]],
+      s:p=>[p.c+", avec cumin, paprika et ail.","Mélanger le yaourt avec ail, citron et herbes.","Garnir les pitas chaudes de salade, tomate, oignon, protéine et sauce."],g:1},
+    fajitas:{n:"Fajitas",p:["poulet","boeuf","crevettes","dinde","tofu","pst"],i:[["tortilla",120],["poivron",120],["oignon",50],["fblanc",30],["huile",8]],
+      s:p=>[p.c+".","Ajouter poivrons et oignon en lanières, épices fajitas, 6 min à feu vif.","Servir dans les tortillas chaudes avec le fromage blanc."]},
+    grec:{n:"Wrap grec",p:["poulet","dinde","pchiche","thon"],i:[["tortilla",120],["concombre",60],["tomate",60],["feta",25],["yaourt",50]],
+      s:p=>[p.c+", avec origan.","Râper le concombre, le presser et le mélanger au yaourt avec ail et aneth.","Garnir les tortillas avec la sauce, la tomate, la feta et la protéine."]},
+  };
+  for(const[k,b]of Object.entries(WR))for(const pk of b.p){const p=P[pk];
+    add("plat",`wrap_${k}_${pk}`,`${b.n} ${p.au}`,[...p.i,...b.i],b.s(p),b.g?{g:1}:{})}
+
+  // ---------- Stir-fried noodles and rice
+  const WOK=[["nouilles","Nouilles sautées",["poulet","crevettes","boeuf","porc","tofu","oeuf","tempeh","dinde"],[["poelee",150]],"la poêlée de légumes"],
+    ["nouilles","Pad thaï",["poulet","crevettes","tofu","dinde"],[["chou",80],["carotte",50],["oeuf",60],["bcac",10]],"le chou et la carotte émincés, puis l'œuf battu"],
+    ["nouilles","Yakisoba",["porc","poulet","tofu"],[["chou",120],["carotte",60]],"le chou et la carotte émincés"],
+    ["riz","Riz cantonais",["crevettes","poulet","jambon","tofu"],[["ppois",80],["oeuf",60],["oignon",30]],"les petits pois, l'oignon puis l'œuf battu"],
+    ["riz","Riz sauté au chou",["porc","boeuf","tofu"],[["chou",120],["carotte",50]],"le chou et la carotte émincés"]];
+  for(const[base,n,ps,veg,vtxt]of WOK)for(const pk of ps){const p=P[pk];
+    add("plat",`wok_${n.slice(0,6).replace(/\W/g,"")}_${pk}`,`${n} ${p.au}`,[...p.i,[base,base==="riz"?85:90],...veg,["soja",15],["huile",8]],
+      [base==="riz"?"Cuire le riz, idéalement la veille, et le laisser refroidir.":"Cuire les nouilles 4 min, les rincer à l'eau froide.",p.c+".",`Ajouter ${vtxt}, 3 min à feu vif.`,`Ajouter ${base==="riz"?"le riz":"les nouilles"} et la sauce soja, sauter 2 min.`])}
+
+  // ---------- Sheet-pan dinners
+  const STARCH={pdt:["pommes de terre",[["pdt",300]]],patate:["patate douce",[["patate",250]]]};
+  const SVEG={brocoli:["brocoli",[["brocoli",150]]],carotte:["carottes",[["carotte",150]]],poivron:["poivrons",[["poivron",150]]],courgette:["courgette",[["courgette",180]]],
+    choufleur:["chou-fleur",[["choufleur",180]]],hverts:["haricots verts",[["hverts",150]]],butternut:["butternut",[["butternut",200]]]};
+  const TRAY=[["cuisse","pdt","carotte"],["cuisse","patate","brocoli"],["poulet","pdt","poivron"],["poulet","patate","courgette"],["dinde","pdt","hverts"],["dinde","patate","choufleur"],
+    ["saumon","pdt","brocoli"],["saumon","patate","hverts"],["colin","pdt","courgette"],["colin","patate","poivron"],["tofu","patate","brocoli"],["tofu","pdt","poivron"],
+    ["pchiche","patate","choufleur"],["pchiche","pdt","butternut"],["halloumi","patate","poivron"],["halloumi","pdt","courgette"],["porc","pdt","carotte"],["porc","patate","butternut"],
+    ["tempeh","patate","brocoli"],["oeuf","pdt","poivron"]];
+  for(const[pk,sk,vk]of TRAY){const p=P[pk],st=STARCH[sk],v=SVEG[vk],fish=pk==="saumon"||pk==="colin";
+    add("plat",`tray_${pk}_${sk}_${vk}`,`Plaque au four ${p.au}, ${st[0]} et ${v[0]}`,[...p.i,...st[1],...v[1],["huile",10]],
+      [`Couper les ${sk==="pdt"?"pommes de terre":"patates douces"} en quartiers, les mélanger avec la moitié de l'huile, du paprika et du sel.`,"Enfourner 15 min à 210 °C.",
+       pk==="oeuf"?"Ajouter les légumes, 15 min, puis casser les œufs dans des creux et cuire encore 6 min.":`Ajouter les légumes et ${fish?"le poisson":"la protéine"} assaisonnés avec le reste d'huile et des herbes, cuire encore ${fish?12:20} min.`,
+       "Servir avec un filet de citron."],G.has(pk)?{g:1}:{})}
+
+  // ---------- Oven gratins and comfort food (gourmand)
+  const g=(id,n,items,s)=>add("plat",id,n,items,s,{g:1});
+  [["boeuf","Lasagnes au bœuf"],["hachevege","Lasagnes végétales"],["pst","Lasagnes au soja texturé"],["lentille","Lasagnes aux lentilles"]].forEach(([pk,n])=>{const p=P[pk];
+    g(`lasagne_${pk}`,n,[...p.i,["pates",90],["tomconc",150],["oignon",40],["lait",120],["farine",10],["emmental",25]],
+      ["Faire revenir l'oignon.",p.c+", puis ajouter les tomates et mijoter 10 min.","Préparer une béchamel légère : farine et lait fouettés à feu doux 5 min.","Alterner feuilles de lasagne, sauce et béchamel, finir par l'emmental. 30 min à 190 °C."])});
+  g("lasagne_epinard","Lasagnes épinards-ricotta",[["pates",90],["epinard",200],["ricotta",100],["tomconc",120],["mozza",50],["oeuf",30]],["Mélanger les épinards égouttés, la ricotta et l'œuf.","Alterner feuilles, sauce tomate et mélange épinards.","Finir par la mozzarella. 30 min à 190 °C."]);
+  g("lasagne_saumon","Lasagnes saumon-épinards",[["pates",90],["saumon",110],["epinard",150],["lait",150],["farine",12],["emmental",20]],["Préparer une béchamel légère avec la farine et le lait.","Effeuiller le saumon cru, mélanger aux épinards égouttés.","Alterner feuilles, garniture et béchamel, finir par l'emmental. 30 min à 190 °C."]);
+  [["jambon","Gratin de pâtes au jambon"],["thon","Gratin de pâtes au thon"],["poulet","Gratin de pâtes poulet-brocoli"],["saumon","Gratin de pâtes au saumon"]].forEach(([pk,n])=>{const p=P[pk];
+    g(`gratpates_${pk}`,n,[...p.i,["pates",100],["lait",100],["emmental",25],["oeuf",30],pk==="poulet"?["brocoli",120]:["epinard",80]],
+      ["Cuire les pâtes 2 min de moins qu'indiqué et les légumes avec.",p.c+".","Mélanger avec le lait battu avec l'œuf, verser dans un plat, couvrir d'emmental.","20 min à 200 °C."])});
+  [["jambon","Gratin de pommes de terre au jambon"],["saumon","Gratin de pommes de terre au saumon"],["poulet","Gratin de pommes de terre au poulet"]].forEach(([pk,n])=>{const p=P[pk];
+    g(`gratpdt_${pk}`,n,[...p.i,["pdt",300],["lait",150],["creme",30],["emmental",20]],["Couper les pommes de terre en fines rondelles.",p.c+".","Alterner pommes de terre et protéine dans un plat, verser lait et crème avec ail et muscade, couvrir d'emmental.","45 min à 190 °C."])});
+  g("tartiflette","Tartiflette allégée",[["pdt",300],["lardons",60],["oignon",50],["creme",30],["emmental",30],["fblanc",80],["salade",50]],["Cuire les pommes de terre à l'eau 15 min, les couper.","Dorer les lardons et l'oignon.","Mélanger avec la crème et le fromage blanc, couvrir d'emmental, 20 min à 200 °C. Servir avec la salade."]);
+  g("hachis_patate","Hachis parmentier de patate douce",[["boeuf",130],["patate",300],["oignon",40],["lait",50],["emmental",15]],["Cuire la patate douce 15 min à l'eau et l'écraser avec le lait.","Dorer l'oignon et le bœuf.","Étaler le bœuf, couvrir de purée et d'emmental, 20 min à 200 °C."]);
+  g("hachis_lentilles","Hachis parmentier aux lentilles",[["lentille",80],["pdt",300],["carotte",60],["oignon",40],["lait",60],["emmental",20],["tomconc",60]],["Cuire les lentilles 20 min.","Cuire les pommes de terre et les écraser avec le lait.","Faire revenir oignon et carotte, ajouter lentilles et tomates.","Couvrir de purée et d'emmental, 20 min à 200 °C."]);
+  g("brandade","Brandade de colin",[["colin",170],["pdt",250],["lait",80],["huile",8],["salade",50]],["Cuire le colin 8 min dans le lait frémissant.","Cuire les pommes de terre et les écraser avec le lait de cuisson, l'ail et l'huile.","Mélanger au poisson émietté, gratiner 15 min à 210 °C."]);
+  [["jambon","jambon"],["poulet","poulet"],["oeuf","oeuf"]].forEach(([pk])=>{const p=P[pk];g(`gratcf_${pk}`,`Gratin de chou-fleur ${p.au}`,[...p.i,["choufleur",250],["lait",120],["farine",10],["emmental",25],["pain",50]],["Cuire le chou-fleur 8 min à l'eau.",p.c+".","Préparer une béchamel avec farine et lait, ajouter la moitié de l'emmental.","Napper chou-fleur et protéine, couvrir du reste d'emmental, 20 min à 200 °C. Servir avec le pain."])});
+  g("moussaka","Moussaka",[["boeuf",130],["aubergine",200],["tomconc",120],["oignon",40],["lait",100],["farine",10],["emmental",15],["huile",8]],["Couper l'aubergine en tranches, la rôtir 20 min à 210 °C avec l'huile.","Dorer l'oignon et le bœuf avec cannelle, ajouter les tomates, 10 min.","Alterner aubergine et viande, napper de béchamel légère et d'emmental, 25 min à 190 °C."]);
+  g("moussaka_vege","Moussaka aux lentilles",[["lentille",80],["aubergine",200],["tomconc",120],["oignon",40],["yaourt",100],["oeuf",60],["emmental",15],["huile",8]],["Rôtir l'aubergine en tranches 20 min à 210 °C.","Cuire les lentilles avec l'oignon et les tomates.","Alterner aubergine et lentilles, napper de yaourt battu avec l'œuf et l'emmental, 25 min à 190 °C."]);
+  [["poulet"],["boeuf"],["hnoir"]].forEach(([pk])=>{const p=P[pk];g(`enchi_${pk}`,`Enchiladas ${p.au}`,[...p.i,["tortilla",120],["tomconc",120],["poivron",60],["cheddar",25],["fblanc",30]],[p.c+", avec cumin et paprika.","Garnir et rouler les tortillas, les ranger dans un plat.","Napper de tomates épicées et de cheddar, 20 min à 200 °C. Servir avec le fromage blanc."])});
+  g("cannelloni","Cannellonis ricotta-épinards",[["pates",90],["ricotta",100],["epinard",180],["tomconc",150],["mozza",40]],["Mélanger ricotta et épinards égouttés, assaisonner de muscade.","Farcir les cannellonis, les couvrir de sauce tomate et de mozzarella.","35 min à 190 °C."]);
+  g("cannelloni_boeuf","Cannellonis au bœuf",[["pates",90],["boeuf",130],["tomconc",150],["oignon",30],["emmental",20]],["Dorer l'oignon et le bœuf, ajouter un tiers des tomates.","Farcir les cannellonis, couvrir du reste de tomates et d'emmental.","35 min à 190 °C."]);
+  [["boeuf"],["thon"],["oeuf"]].forEach(([pk])=>{const p=P[pk];g(`gratcourg_${pk}`,`Gratin de courgettes ${p.au}`,[...p.i,["courgette",250],["riz",60],["oeuf",pk==="oeuf"?0:30],["emmental",20],["fblanc",60]],["Cuire le riz. Couper les courgettes en rondelles et les poêler 6 min.",p.c+".","Mélanger avec le fromage blanc battu avec l'œuf, couvrir d'emmental, 20 min à 200 °C."])});
+
+  // ---------- Main-course salads
+  const SAL={
+    cesar:{n:"Salade César",p:["poulet","crevettes","dinde","tofu"],i:[["salade",100],["pain",60],["parmesan",15],["fblanc",40],["tomate",60]],s:p=>[p.c+".","Toaster le pain en croûtons.","Sauce : fromage blanc, moutarde, citron, ail et parmesan.","Mélanger la salade, la tomate, la protéine et la sauce, ajouter les croûtons."]},
+    grecque:{n:"Salade grecque",p:["pchiche","poulet","thon","halloumi"],i:[["tomate",120],["concombre",100],["feta",30],["oignon",20],["pita",75],["huile",8]],s:p=>[p.c+".","Couper tomate, concombre et oignon.","Ajouter la feta, l'origan, l'huile et le citron.","Servir avec la pita grillée."]},
+    taboule:{n:"Taboulé",p:["poulet","pchiche","crevettes","thon","halloumi"],i:[["boulgour",80],["tomate",100],["concombre",80],["huile",8]],s:p=>["Faire gonfler le boulgour 15 min dans l'eau bouillante, égoutter.",p.c+".","Mélanger avec tomate et concombre en dés, beaucoup de persil et de menthe, citron et huile."]},
+    lentilles:{n:"Salade de lentilles",p:["oeuf","saumonfume","thon","jambon","feta"],i:[["lentille",70],["carotte",60],["oignon",20],["salade",40],["huile",8]],s:p=>["Cuire les lentilles 20 min, les laisser tiédir.",p.c+".","Mélanger avec la carotte râpée, l'oignon, la moutarde, le vinaigre et l'huile."]},
+    pates:{n:"Salade de pâtes",p:["thon","poulet","crevettes","mozzarella"],i:[["pates",90],["tomate",100],["mais",50],["poivron",60],["fblanc",30],["huile",5]],s:p=>["Cuire les pâtes, les rincer à l'eau froide.",p.c+".","Mélanger avec tomate, maïs, poivron et la sauce fromage blanc-moutarde."]},
+    riz:{n:"Salade de riz",p:["thon","surimi","poulet","oeuf"],i:[["riz",80],["tomate",80],["mais",50],["concombre",60],["huile",5]],s:p=>["Cuire le riz, le refroidir.",p.c+".","Mélanger avec tomate, maïs et concombre en dés, vinaigrette moutarde."]},
+    quinoa:{n:"Salade de quinoa",p:["feta","poulet","saumon","tofu","edamame"],i:[["quinoa",70],["concombre",80],["poivron",60],["avocat",40],["huile",5]],s:p=>["Cuire le quinoa 12 min, le refroidir.",p.c+".","Mélanger avec concombre, poivron, avocat, citron et coriandre."]},
+  };
+  P.saumonfume={i:[["saumonfume",80]],au:"au saumon fumé",de:"de saumon fumé",c:"Couper le saumon fumé en lanières"};
+  P.feta={i:[["feta",60],["pchiche",100]],au:"à la feta",de:"de feta",c:"Émietter la feta et rincer les pois chiches"};
+  P.mozzarella={i:[["mozza",100],["oeuf",60]],au:"mozzarella et œuf",de:"de mozzarella",c:"Couper la mozzarella en dés, cuire l'œuf dur 9 min"};
+  for(const[k,b]of Object.entries(SAL))for(const pk of b.p){const p=P[pk];add("plat",`salade_${k}_${pk}`,`${b.n} ${p.au}`,[...p.i,...b.i],b.s(p))}
+  add("plat","nicoise","Salade niçoise",[["thon",120],["oeuf",60],["pdt",200],["hverts",100],["tomate",100],["huile",8]],["Cuire les pommes de terre 15 min et les haricots verts 6 min.","Cuire l'œuf dur 9 min.","Assembler avec le thon, la tomate et une vinaigrette moutarde."]);
+  add("plat","piemontaise","Salade piémontaise",[["pdt",250],["jambon",80],["oeuf",60],["tomate",80],["fblanc",50]],["Cuire les pommes de terre 15 min, les couper en dés.","Cuire l'œuf dur 9 min.","Mélanger avec le jambon, la tomate et le fromage blanc à la moutarde et aux cornichons."]);
+
+  // ---------- Soups, dals, chilis
+  [["epinard","aux épinards",[["epinard",150]]],["butternut","à la butternut",[["butternut",200]]],["patate","à la patate douce",[["patate",180]]],["carotte","aux carottes",[["carotte",150]]],["choufleur","au chou-fleur",[["choufleur",180]]]].forEach(([k,lab,v])=>
+    add("plat",`dal_${k}`,`Dal de lentilles corail ${lab}`,[["corail",90],...v,["tomconc",100],["coco",40],["oignon",40],["riz",50],["huile",5]],
+      ["Faire revenir l'oignon avec curcuma, cumin, gingembre et ail.","Ajouter les lentilles rincées, les légumes, les tomates et 3 fois leur volume d'eau.","Mijoter 20 min, ajouter le lait de coco.","Servir avec le riz."]));
+  [["dinde","Chili de dinde"],["pst","Chili au soja texturé"],["hachevege","Chili végétal"],["tofu","Chili au tofu émietté"]].forEach(([pk,n])=>{const p=P[pk];
+    add("plat",`chili_${pk}`,n,[...p.i,["hrouge",120],["tomconc",150],["poivron",60],["oignon",40],["riz",70],["huile",5]],["Cuire le riz.","Faire revenir l'oignon et le poivron.",p.c+", avec cumin, paprika et piment.","Ajouter haricots et tomates, mijoter 15 min."])});
+  add("plat","chili_blanc","Chili blanc au poulet",[["poulet",150],["hblanc",150],["mais",60],["oignon",40],["fblanc",50],["riz",60],["huile",5]],["Cuire le riz.","Saisir le poulet avec l'oignon, le cumin et l'origan.","Ajouter haricots blancs, maïs et un verre de bouillon, mijoter 10 min.","Hors du feu, ajouter le fromage blanc."]);
+  add("plat","sin_carne","Chili sin carne",[["hrouge",150],["hnoir",100],["mais",60],["tomconc",150],["oignon",40],["riz",70],["fblanc",60],["huile",5]],["Cuire le riz.","Faire revenir l'oignon avec cumin, paprika et piment.","Ajouter les haricots, le maïs et les tomates, mijoter 15 min.","Servir avec le fromage blanc."]);
+  add("plat","pois_casses","Soupe de pois cassés au jambon",[["pcasse",90],["jambon",80],["carotte",80],["oignon",40],["pain",60]],["Rincer les pois cassés, les cuire 40 min avec carotte, oignon et 4 fois leur volume d'eau.","Mixer, ajouter le jambon en dés.","Servir avec le pain."]);
+  add("plat","minestrone","Minestrone aux haricots blancs",[["hblanc",150],["pates",50],["courgette",100],["carotte",60],["tomconc",100],["parmesan",15],["poireau",60]],["Faire revenir carotte, poireau et courgette 5 min.","Ajouter tomates et 500 ml d'eau, 15 min.","Ajouter les pâtes et les haricots, cuire 8 min. Servir avec le parmesan."]);
+  add("plat","harira","Harira",[["lentille",50],["pchiche",120],["tomconc",150],["oignon",40],["dinde",80],["pain",60]],["Faire revenir l'oignon et la dinde en dés avec cumin, gingembre et cannelle.","Ajouter lentilles, pois chiches, tomates et 600 ml d'eau, mijoter 30 min.","Finir avec coriandre et citron, servir avec le pain."]);
+  [["poulet","Ramen au poulet"],["porc","Ramen au porc"],["tofu","Ramen au tofu"],["crevettes","Ramen aux crevettes"]].forEach(([pk,n])=>{const p=P[pk];
+    add("plat",`ramen_${pk}`,n,[...p.i,["nouilles",80],["oeuf",60],["epinard",80],["champi",60],["soja",20]],["Cuire l'œuf 6 min 30, l'écaler.","Porter 500 ml de bouillon à frémir avec sauce soja, ail et gingembre, y cuire les champignons.",p.c+".","Cuire les nouilles dans le bouillon 4 min avec les épinards. Servir avec l'œuf coupé en deux."])});
+  add("plat","pho","Pho au bœuf",[["boeuf",130],["nouilles",80],["oignon",40],["soja",15],["salade",30]],["Porter 500 ml de bouillon avec oignon, cannelle, anis et gingembre, 10 min.","Cuire les nouilles dedans 4 min.","Ajouter le bœuf, qui cuit dans le bouillon, et servir avec herbes et citron vert."]);
+  add("plat","soupe_thai","Soupe thaï coco aux crevettes",[["crevettes",150],["coco",80],["nouilles",60],["champi",80],["poivron",60]],["Porter 400 ml de bouillon avec le lait de coco, la citronnelle, le gingembre et le curry.","Ajouter champignons, poivron et nouilles, 4 min.","Ajouter les crevettes 2 min. Finir avec citron vert et coriandre."]);
+
+  // ---------- Egg mains
+  const OM=[["champi","Omelette champignons-emmental",[["champi",120],["emmental",20]]],["epfeta","Omelette épinards-feta",[["epinard",100],["feta",30]]],["jambon","Omelette jambon-fromage",[["jambon",60],["emmental",20]]],
+    ["courg","Omelette courgette-chèvre",[["courgette",120],["chevre",30]]],["thon","Omelette thon-tomate",[["thon",80],["tomate",80]]],["chorizo","Omelette chorizo-poivron",[["chorizo",25],["poivron",100]],1]];
+  OM.forEach(([k,n,v,gg])=>add("plat",`om_${k}`,n,[["oeuf",180],...v,["pdt",250],["salade",50],["huile",5]],["Cuire les pommes de terre en dés à la poêle 15 min, ou à l'eau.","Faire revenir la garniture 4 min.","Ajouter les œufs battus, cuire à feu doux et plier.","Servir avec la salade et les pommes de terre."],gg?{g:1}:{}));
+  add("plat","tortilla_esp","Tortilla espagnole",[["oeuf",180],["pdt",250],["oignon",60],["huile",10],["salade",60]],["Cuire pommes de terre et oignon émincés 15 min à feu doux dans l'huile.","Mélanger aux œufs battus, remettre dans la poêle 8 min, retourner, 3 min.","Servir avec la salade."]);
+  [["brocoli","Frittata brocoli-parmesan",[["brocoli",150],["parmesan",15]]],["ppois","Frittata petits pois-ricotta",[["ppois",100],["ricotta",50]]],["poireau","Frittata poireau-saumon",[["poireau",120],["saumon",70]]],["poivron","Frittata poivron-feta",[["poivron",120],["feta",30]]]].forEach(([k,n,v])=>
+    add("plat",`frit_${k}`,n,[["oeuf",180],...v,["pain",80],["huile",5]],["Faire revenir les légumes 5 min.","Verser les œufs battus, cuire 5 min à feu doux.","Finir 8 min au four à 200 °C. Servir avec le pain."]));
+  [["feta","Shakshuka à la feta",[["feta",30]]],["pchiche","Shakshuka aux pois chiches",[["pchiche",120]]],["epinard","Shakshuka verte aux épinards",[["epinard",150],["fblanc",50]]],["merguez","Shakshuka au chorizo",[["chorizo",25]],1]].forEach(([k,n,v,gg])=>
+    add("plat",`shak_${k}`,n,[["oeuf",180],["tomconc",200],["poivron",80],["oignon",40],...v,["pain",80],["huile",5]],["Faire revenir oignon et poivron avec cumin et paprika.","Ajouter les tomates et la garniture, mijoter 10 min.","Creuser des puits, y casser les œufs, couvrir 6 min.","Servir avec le pain."],gg?{g:1}:{}));
+  [["thon","au thon",[["thon",100]]],["jambon","au jambon",[["jambon",80]]],["saumon","saumon-poireau",[["saumon",80],["poireau",100]]],["chevre","chèvre-courgette",[["chevre",40],["courgette",120]]]].forEach(([k,lab,v])=>
+    add("plat",`quiche_${k}`,`Quiche sans pâte ${lab}`,[["oeuf",120],["lait",150],["farine",20],...v,["salade",60],["emmental",15]],["Fouetter les œufs, la farine et le lait.","Ajouter la garniture et l'emmental, verser dans un plat huilé.","35 min à 180 °C. Servir avec la salade."]));
+
+  // ---------- Pizzas and burgers (gourmand)
+  const PZ=[["reine","Pizza reine",[["jambon",60],["champi",60]]],["thon","Pizza thon-oignon",[["thon",80],["oignon",30]]],["poulet","Pizza poulet-poivron",[["poulet",80],["poivron",60]]],
+    ["chorizo","Pizza chorizo",[["chorizo",30],["poivron",50]]],["vege","Pizza végétarienne ricotta",[["courgette",80],["poivron",50],["ricotta",50]]],["pesto","Pizza pesto-tomates",[["pesto",15],["tomate",80]]],
+    ["chevre","Pizza chèvre-miel",[["chevre",40],["miel",5],["epinard",60]]],["saumon","Pizza blanche saumon-épinards",[["saumon",80],["epinard",80],["creme",20]]],["boeuf","Pizza bolognaise",[["boeuf",80],["oignon",30]]],["oeuf","Pizza florentine à l'œuf",[["epinard",80],["oeuf",60]]]];
+  PZ.forEach(([k,n,v])=>g(`pizza_${k}`,n,[["pizza",130],["tomconc",60],["mozza",60],...v,["salade",40]],["Étaler la pâte, la couvrir de tomates.","Ajouter la garniture et la mozzarella.","12 à 15 min à 240 °C. Servir avec la salade."]));
+  const BG=[["boeuf","Cheeseburger maison",[["boeuf",130]],"Former un steak et le cuire 3 min par face"],["dinde","Burger de dinde",[["dinde",130]],"Aplatir la dinde et la griller 4 min par face"],
+    ["saumon","Burger au saumon",[["saumon",120]],"Cuire le saumon 4 min par face"],["tofu","Burger tofu mariné",[["tofu",150],["soja",10]],"Mariner le tofu en tranches dans la sauce soja, le dorer 4 min par face"],
+    ["hnoir","Burger de haricots noirs",[["hnoir",150],["avoine",20],["oeuf",30]],"Écraser les haricots avec l'avoine, l'œuf et le cumin, former une galette et la dorer 4 min par face"],
+    ["lentille","Burger de lentilles",[["lentille",60],["avoine",20],["oeuf",30]],"Cuire les lentilles, les écraser avec l'avoine et l'œuf, former une galette et la dorer 4 min par face"],
+    ["halloumi","Burger halloumi",[["halloumi",90]],"Griller le halloumi 2 min par face"],["porc","Burger effiloché de porc",[["porc",130],["miel",5]],"Mijoter le porc 40 min avec tomates, miel et paprika fumé, puis l'effilocher"]];
+  BG.forEach(([k,n,v,step])=>g(`burger_${k}`,n,[...v,["pain",100],["cheddar",k==="halloumi"?0:20],["salade",30],["tomate",50],["fblanc",30],["patate",150],["huile",5]],
+    ["Couper la patate douce en frites, les rôtir 25 min à 210 °C avec l'huile.",step+".","Toaster le pain, monter avec salade, tomate, fromage et sauce fromage blanc-moutarde."]));
+
+  // ---------- Risottos, gnocchis, polenta, couscous
+  [["poulet_champi","Risotto poulet-champignons",[["poulet",130],["champi",120]]],["crevettes","Risotto crevettes-courgette",[["crevettes",130],["courgette",120]]],
+   ["saumon","Risotto saumon-poireau",[["saumon",110],["poireau",120]]],["jambon","Risotto petits pois-jambon",[["jambon",80],["ppois",100]]],["butternut","Risotto butternut-pois chiches",[["butternut",180],["pchiche",120]]]].forEach(([k,n,v])=>
+    add("plat",`risotto_${k}`,n,[["riz",85],...v,["parmesan",15],["oignon",30],["huile",5]],["Faire revenir l'oignon, ajouter le riz et le nacrer 2 min.","Mouiller de bouillon chaud louche par louche pendant 18 min en remuant.","Cuire la garniture à part et l'ajouter en fin de cuisson avec le parmesan."]));
+  [["pesto","Gnocchis poêlés poulet-pesto",[["poulet",130],["pesto",15],["tomate",80]]],["tomate","Gnocchis à la tomate et mozzarella",[["tomconc",150],["mozza",80],["jambon",50]]],
+   ["ricotta","Gnocchis épinards-ricotta",[["epinard",150],["ricotta",60],["dinde",80]]],["crevettes","Gnocchis crevettes à l'ail",[["crevettes",130],["courgette",100]]]].forEach(([k,n,v])=>
+    add("plat",`gnocchi_${k}`,n,[["gnocchi",200],...v,["huile",8]],["Dorer les gnocchis 6 min à la poêle dans l'huile.","Cuire la garniture à côté.","Mélanger et servir chaud."],{g:1}));
+  [["boeuf","Polenta crémeuse et ragoût de bœuf",[["boeuf",130],["tomconc",150],["carotte",50]]],["oeuf","Polenta aux champignons et œuf mollet",[["champi",150],["oeuf",120],["parmesan",10]]],
+   ["pchiche","Polenta et ratatouille aux pois chiches",[["courgette",100],["aubergine",100],["poivron",60],["pchiche",150],["tomconc",80]]]].forEach(([k,n,v])=>
+    add("plat",`polenta_${k}`,n,[["polenta",70],["lait",100],...v,["huile",5]],["Cuire la polenta 5 min dans le lait et 200 ml d'eau en remuant.","Préparer la garniture à la poêle.","Servir la garniture sur la polenta."]));
+  [["poulet","Couscous au poulet"],["boeuf","Couscous aux boulettes de bœuf"],["pchiche","Couscous aux légumes et pois chiches"],["colin","Couscous de poisson"]].forEach(([pk,n])=>{const p=P[pk];
+    add("plat",`couscous_${pk}`,n,[...p.i,["semoule",80],["carotte",80],["courgette",100],["pchiche",pk==="pchiche"?0:60],["tomconc",80],["huile",5]],["Mijoter carottes, courgettes, tomates et pois chiches 20 min avec ras el-hanout et 400 ml d'eau.",p.c+".","Faire gonfler la semoule dans l'eau bouillante.","Servir la semoule avec le bouillon, les légumes et la protéine."],G.has(pk)?{g:1}:{})});
+  [["dinde","Pilaf de boulgour à la dinde"],["crevettes","Pilaf de boulgour aux crevettes"]].forEach(([pk,n])=>{const p=P[pk];add("plat",`pilaf_${pk}`,n,[...p.i,["boulgour",80],["poivron",80],["oignon",40],["huile",5]],["Faire revenir l'oignon et le poivron.","Ajouter le boulgour et 2 fois son volume d'eau, 12 min à couvert.",p.c+", puis mélanger au boulgour."])});
+  [["poulet","Poêlée de pommes de terre, poulet et haricots verts",[["poulet",150],["hverts",150]]],["oeuf","Pommes de terre sautées et œufs au plat",[["oeuf",180],["salade",60]]],["saumon","Poêlée de pommes de terre au saumon et aneth",[["saumon",120],["epinard",100]]]].forEach(([k,n,v])=>
+    add("plat",`poelee_${k}`,n,[["pdt",300],...v,["huile",10]],["Couper les pommes de terre en dés et les dorer 15 min à couvert puis 5 min à découvert.","Cuire la protéine et les légumes à côté.","Mélanger et assaisonner."]));
+
+  // ---------- Fish parcels and classics
+  const PAP=[["colin","poireau","pdt"],["colin","courgette","riz"],["colin","tomate","semoule"],["saumon","poireau","riz"],["saumon","brocoli","quinoa"],["saumon","courgette","pdt"],["colin","epinard","quinoa"],["saumon","epinard","semoule"]];
+  const PV={poireau:["poireaux",[["poireau",150]]],courgette:["courgette",[["courgette",150]]],tomate:["tomates",[["tomate",150]]],brocoli:["brocoli",[["brocoli",150]]],epinard:["épinards",[["epinard",150]]]};
+  const PS={pdt:["pommes de terre",[["pdt",250]]],riz:["riz",[["riz",80]]],semoule:["semoule",[["semoule",75]]],quinoa:["quinoa",[["quinoa",70]]]};
+  PAP.forEach(([pk,vk,sk])=>{const p=P[pk];add("plat",`papillote_${pk}_${vk}_${sk}`,`Papillote ${p.de} aux ${PV[vk][0]}, ${PS[sk][0]}`.replace("aux courgette","à la courgette").replace("aux brocoli","au brocoli"),[...p.i,...PV[vk][1],...PS[sk][1],["huile",5]],
+    [`Cuire ${sk==="pdt"?"les pommes de terre":"le "+PS[sk][0]}.`,"Déposer les légumes émincés et le poisson sur du papier cuisson, avec citron, herbes et huile.","Fermer et cuire 18 min à 200 °C."])});
+  g("colin_pane","Colin pané maison et purée",[["colin",170],["chapelure",25],["oeuf",30],["pdt",250],["lait",60],["hverts",100]],["Passer le colin dans l'œuf puis la chapelure, 15 min à 210 °C.","Cuire les pommes de terre et les écraser avec le lait.","Servir avec les haricots verts."]);
+  g("fish_chips","Fish and chips au four",[["colin",170],["chapelure",25],["oeuf",30],["pdt",300],["ppois",80],["fblanc",30],["huile",10]],["Couper les frites, les rôtir 30 min à 220 °C avec l'huile.","Paner le colin, l'ajouter 15 min avant la fin.","Servir avec les petits pois écrasés et une sauce fromage blanc-cornichons."]);
+
+  // ---------- French and world classics
+  const C=(id,n,items,s,o)=>add("plat",id,n,items,s,o);
+  C("basquaise","Poulet basquaise et riz",[["poulet",150],["poivron",150],["tomconc",120],["oignon",40],["riz",80],["huile",5]],["Cuire le riz.","Dorer le poulet, ajouter oignon et poivrons, 5 min.","Ajouter les tomates et le piment d'Espelette, mijoter 15 min."]);
+  C("moutarde","Poulet à la moutarde, haricots verts",[["poulet",150],["creme",30],["hverts",150],["pdt",250],["huile",5]],["Cuire les pommes de terre et les haricots verts.","Dorer le poulet, ajouter la crème et 1 c. à soupe de moutarde, 5 min."]);
+  C("blanquette","Blanquette de dinde",[["dinde",150],["carotte",100],["champi",80],["creme",30],["riz",80],["farine",8]],["Mijoter la dinde en morceaux et les carottes 30 min dans un bouillon.","Ajouter les champignons 10 min.","Lier le bouillon avec la farine et la crème. Servir avec le riz."]);
+  C("porc_caramel","Porc au caramel et riz",[["porc",140],["riz",85],["soja",15],["miel",10],["oignon",40],["hverts",100]],["Cuire le riz et les haricots verts.","Saisir le porc avec l'oignon.","Ajouter miel, sauce soja et poivre, laisser caraméliser 5 min."],{g:1});
+  C("porc_normande","Porc à la normande",[["porc",140],["pomme",120],["creme",30],["pdt",250],["oignon",30]],["Cuire les pommes de terre.","Saisir le porc avec l'oignon, ajouter la pomme en quartiers 5 min.","Ajouter la crème et la moutarde, 3 min."],{g:1});
+  C("porc_poivrons","Sauté de porc aux poivrons",[["porc",140],["poivron",150],["riz",80],["soja",10],["huile",5]],["Cuire le riz.","Saisir le porc, ajouter les poivrons en lanières, 6 min.","Déglacer à la sauce soja."]);
+  C("filet_mignon","Filet mignon, purée de patate douce",[["porc",150],["patate",250],["lait",50],["hverts",120]],["Saisir le filet mignon puis le cuire 20 min à 180 °C.","Cuire la patate douce et l'écraser avec le lait.","Servir tranché avec les haricots verts."]);
+  C("tajine","Tajine de poulet aux carottes",[["cuisse",170],["carotte",150],["oignon",40],["pchiche",80],["semoule",70],["huile",5]],["Dorer le poulet et l'oignon avec ras el-hanout.","Ajouter carottes, pois chiches et un verre d'eau, mijoter 30 min.","Servir avec la semoule."]);
+  C("kefta","Boulettes de bœuf à la tomate, semoule",[["boeuf",130],["tomconc",150],["semoule",70],["oignon",30],["oeuf",30]],["Former des boulettes avec le bœuf, l'œuf, l'oignon haché et le cumin.","Les dorer puis les mijoter 15 min dans les tomates.","Servir avec la semoule."],{g:1});
+  C("boulettes_dinde","Boulettes de dinde, sauce yaourt",[["dinde",150],["boulgour",75],["yaourt",80],["concombre",80],["oeuf",30]],["Mixer la dinde, l'œuf et les herbes, former des boulettes, 15 min à 200 °C.","Cuire le boulgour.","Servir avec le yaourt au concombre."]);
+  C("stroganoff","Stroganoff de bœuf",[["boeuf",130],["champi",120],["creme",30],["fblanc",40],["riz",80],["oignon",30]],["Cuire le riz.","Dorer le bœuf, l'oignon et les champignons.","Ajouter crème, fromage blanc et paprika hors du feu."],{g:1});
+  C("ratatouille_oeuf","Ratatouille et œufs pochés",[["courgette",120],["aubergine",120],["poivron",80],["tomconc",100],["oeuf",120],["pain",80],["huile",8]],["Mijoter courgette, aubergine, poivron et tomates 25 min.","Pocher les œufs 3 min.","Servir avec le pain."]);
+  C("lentilles_saucisse","Petit salé aux lentilles allégé",[["lentille",80],["lardons",50],["jambon",60],["carotte",80],["oignon",30]],["Dorer les lardons et l'oignon.","Ajouter les lentilles, la carotte et 3 fois leur volume d'eau, 25 min.","Ajouter le jambon en dés en fin de cuisson."],{g:1});
+  C("chou_farci","Chou sauté au porc et riz",[["porc",130],["chou",200],["riz",75],["soja",10],["huile",5]],["Cuire le riz.","Saisir le porc, ajouter le chou émincé, 8 min.","Déglacer à la sauce soja."]);
+  C("saumon_teriyaki_nouilles","Saumon laqué et nouilles",[["saumon",125],["nouilles",80],["brocoli",120],["soja",15],["miel",8]],["Cuire les nouilles et le brocoli.","Saisir le saumon, laquer avec soja et miel."]);
+  C("tofu_general_tao","Tofu général Tao et riz",[["tofu",180],["riz",85],["brocoli",120],["soja",15],["miel",10],["farine",10],["huile",8]],["Cuire le riz et le brocoli.","Fariner le tofu en dés et le dorer.","Napper de soja, miel, ail et vinaigre."]);
+  C("poulet_cacahuete","Poulet sauce cacahuète, riz",[["poulet",150],["bcac",20],["riz",80],["poivron",100],["soja",10]],["Cuire le riz.","Saisir le poulet et le poivron.","Ajouter beurre de cacahuète, sauce soja et un peu d'eau."]);
+  C("dahl_epinard_oeuf","Lentilles vertes, épinards et œuf mollet",[["lentille",80],["epinard",150],["oeuf",120],["oignon",30]],["Cuire les lentilles 20 min.","Faire tomber les épinards avec l'oignon.","Servir avec les œufs mollets."]);
+  C("quinoa_tempeh","Sauté de quinoa au tempeh",[["tempeh",150],["quinoa",70],["poelee",150],["soja",15]],["Cuire le quinoa.","Dorer le tempeh, ajouter la poêlée 5 min.","Mélanger le quinoa et la sauce soja."]);
+  C("edamame_riz","Riz sauté aux edamames et œuf",[["edamame",120],["riz",80],["oeuf",120],["carotte",60],["soja",15],["huile",5]],["Cuire le riz.","Faire sauter edamames et carotte.","Ajouter les œufs battus, le riz et la sauce soja."]);
+  C("flageolets_dinde","Dinde et haricots blancs à la tomate",[["dinde",150],["hblanc",150],["tomconc",120],["oignon",30]],["Saisir la dinde et l'oignon.","Ajouter haricots et tomates, 10 min."]);
+  C("chou_rouge_porc","Porc aux pommes et chou rouge",[["porc",140],["chourouge",150],["pomme",100],["pdt",200]],["Cuire les pommes de terre.","Braiser le chou rouge avec la pomme et un trait de vinaigre 20 min.","Saisir le porc et servir avec le chou."]);
+
+  // ===================== Breakfasts
+  const FR={banane:["banane",[["banane",120]]],pomme:["pomme-cannelle",[["pomme",150]]],frouges:["fruits rouges",[["frouges",100]]],cacao:["chocolat-banane",[["cacao",8],["banane",100]]],
+    mangue:["mangue",[["mangue",100]]],orange:["orange-amandes",[["orange",150],["amandes",10]]],noix:["noix-miel",[["noix",10],["miel",10]]],carotte:["carrot cake",[["carotte",60],["noix",8],["miel",8]]]};
+  const BOOST={skyr:["au skyr",[["skyr",150]]],whey:["à la whey",[["whey",30]]],blanc:["aux blancs d'œufs",[["blancoeuf",150]]]};
+  for(const[fk,f]of Object.entries(FR))for(const[bk,b]of Object.entries(BOOST)){
+    add("matin",`porridge_${fk}_${bk}`,`Porridge ${f[0]} ${b[0]}`,[["avoine",70],["lait",200],...f[1],...b[1]],
+      ["Cuire l'avoine dans le lait 4 min à feu doux en remuant.",bk==="blanc"?"Ajouter les blancs d'œufs en fouettant et cuire encore 2 min jusqu'à ce que ce soit crémeux.":bk==="whey"?"Hors du feu, délayer la whey avec un peu d'eau puis l'incorporer.":"Hors du feu, ajouter le skyr.","Ajouter les fruits et garnitures."],{sweet:1})}
+  for(const[fk,f]of Object.entries(FR))add("matin",`overnight_${fk}`,`Overnight oats ${f[0]}`,[["avoine",60],["skyr",150],["lait",120],...f[1]],["La veille, mélanger avoine, skyr et lait dans un bocal.","Ajouter les fruits et garnitures.","Laisser une nuit au frigo."],{sweet:1});
+  const BWL={skyr:["Bol de skyr",[["skyr",250]]],fblanc:["Bol de fromage blanc",[["fblanc",300]]],cottage:["Bol de cottage cheese",[["cottage",200]]]};
+  const TOP={frouges:["fruits rouges et amandes",[["frouges",100],["amandes",15]]],banane:["banane, cacao et cacahuète",[["banane",120],["cacao",5],["bcac",15]]],pomme:["pomme, noix et cannelle",[["pomme",150],["noix",15]]],
+    mangue:["mangue et avoine grillée",[["mangue",100],["avoine",40]]],orange:["orange, miel et avoine",[["orange",150],["miel",8],["avoine",40]]],granola:["granola maison",[["avoine",50],["miel",10],["amandes",10],["frouges",60]]]};
+  for(const[bk,b]of Object.entries(BWL))for(const[tk,t]of Object.entries(TOP))add("matin",`bol_${bk}_${tk}`,`${b[0]}, ${t[0]}`,[...b[1],...t[1]],
+    [tk==="granola"?"Dorer l'avoine et les amandes 4 min à la poêle avec le miel.":tk==="mangue"?"Dorer l'avoine 3 min à la poêle sèche.":"Couper les fruits.","Verser sur le "+b[0].replace("Bol de ","")+"."],{sweet:1});
+  const TART=[["avocat_oeuf","Tartines avocat et œuf mollet",[["pain",100],["avocat",60],["oeuf",120]]],["saumon","Tartines saumon fumé et fromage frais",[["pain",100],["saumonfume",60],["fblanc",60]]],
+    ["cottage","Tartines cottage cheese et tomate",[["pain",100],["cottage",150],["tomate",80]]],["ricotta","Tartines ricotta, miel et fruits rouges",[["pain",100],["ricotta",80],["miel",8],["frouges",60]]],
+    ["bc_pomme","Tartines beurre de cacahuète et pomme",[["pain",100],["bcac",25],["pomme",100],["skyr",100]]],["thon","Tartines thon et fromage frais",[["pain",100],["thon",100],["fblanc",40]]],
+    ["jambon","Tartines jambon et cottage",[["pain",100],["jambon",60],["cottage",80]]],["houmous","Tartines houmous et œuf",[["pain",100],["pchiche",80],["oeuf",60],["huile",5]]]];
+  TART.forEach(([k,n,v])=>add("matin",`tart_${k}`,n,v,["Griller le pain.","Garnir et poivrer."]));
+  add("matin","croque","Croque-monsieur au four",[["pain",120],["jambon",60],["emmental",25],["fblanc",40],["salade",30]],["Tartiner le pain de fromage blanc, garnir de jambon et d'emmental.","10 min à 210 °C."],{g:1});
+  const EGG=[["champi","Œufs brouillés aux champignons",[["champi",100]]],["jambon","Omelette roulée au jambon",[["jambon",50]]],["tomate","Œufs brouillés tomate-mozzarella",[["tomate",80],["mozza",40]]],
+    ["saumon","Œufs brouillés au saumon fumé",[["saumonfume",40]]],["poivron","Omelette aux poivrons",[["poivron",80]]],["fromage","Omelette fromage et herbes",[["emmental",20]]],["feta","Œufs brouillés épinards-feta",[["epinard",80],["feta",25]]]];
+  EGG.forEach(([k,n,v])=>add("matin",`egg_${k}`,n,[["oeuf",180],...v,["pain",80],["huile",5]],["Faire revenir la garniture 3 min.","Ajouter les œufs battus, cuire à feu doux en remuant.","Servir avec le pain grillé."]));
+  add("matin","burrito_matin","Burrito du matin",[["tortilla",60],["oeuf",120],["hnoir",80],["cheddar",15],["tomate",50]],["Brouiller les œufs.","Garnir la tortilla avec haricots, œufs, tomate et cheddar, rouler."],{g:1});
+  add("matin","muffins_oeufs","Muffins aux œufs et légumes",[["oeuf",180],["poivron",60],["epinard",60],["emmental",15],["pain",60]],["Battre les œufs avec les légumes hachés et l'emmental.","Verser dans des moules à muffins, 20 min à 180 °C.","Se gardent 3 jours au frigo."]);
+  const PAN=[["frouges","Pancakes protéinés aux fruits rouges",[["frouges",80]]],["choco","Pancakes chocolat-banane",[["cacao",8],["banane",60]]],["pomme","Pancakes pomme-cannelle",[["pomme",100]]],["orange","Pancakes à l'orange",[["orange",120]]]];
+  PAN.forEach(([k,n,v])=>add("matin",`pan_${k}`,n,[["avoine",60],["oeuf",120],["skyr",100],["lait",50],...v],["Mixer l'avoine, les œufs, le skyr et le lait.","Cuire des petites galettes 2 min par face.","Servir avec les fruits."],{g:1,sweet:1}));
+  [["frouges","Crêpes protéinées aux fruits rouges",[["frouges",80]]],["choco","Crêpes protéinées au chocolat",[["chocnoir",10]]]].forEach(([k,n,v])=>add("matin",`crepe_${k}`,n,[["farine",50],["oeuf",120],["lait",150],["fblanc",100],...v],["Fouetter farine, œufs et lait, laisser reposer 15 min.","Cuire les crêpes dans une poêle chaude.","Garnir de fromage blanc et de la garniture."],{g:1,sweet:1}));
+  [["frouges","Gaufres protéinées aux fruits rouges",[["frouges",80]]],["banane","Gaufres avoine-banane",[["banane",100]]]].forEach(([k,n,v])=>add("matin",`gaufre_${k}`,n,[["avoine",60],["oeuf",120],["skyr",100],...v],["Mixer avoine, œufs et skyr.","Cuire au gaufrier 4 min.","Servir avec les fruits."],{g:1,sweet:1}));
+  const SMO=[["bc","banane-cacahuète",[["banane",120],["bcac",15]]],["frouges","fruits rouges",[["frouges",120]]],["mangue","mangue",[["mangue",120]]],["cacao","cacao-banane",[["banane",120],["cacao",8]]],["pomme","pomme-avoine",[["pomme",120]]],["orange","orange-mangue",[["orange",120],["mangue",60]]]];
+  SMO.forEach(([k,n,v])=>{add("matin",`smoothie_${k}`,`Smoothie bowl ${n} au skyr`,[["skyr",200],["lait",100],["avoine",40],...v],["Mixer tous les ingrédients jusqu'à ce que ce soit lisse."],{sweet:1});
+    add("matin",`smoothie_soja_${k}`,`Smoothie ${n} au soja`,[["laitsoja",300],["tofusoyeux",100],["avoine",40],...v],["Mixer tous les ingrédients 30 s."],{sweet:1})});
+
+  // ===================== Snacks and desserts
+  const S=(id,n,items,s,o={})=>add("collation",id,n,items,s,o);
+  [["frouges","fruits rouges",[["frouges",80]]],["banane","banane",[["banane",100]]],["pomme","pomme-cannelle",[["pomme",120]]],["mangue","mangue",[["mangue",80]]],["orange","orange",[["orange",120]]],["miel","miel et noix",[["miel",8],["noix",10]]]].forEach(([k,n,v])=>{
+    S(`skyr_${k}`,`Skyr ${n}`,[["skyr",150],...v],["Mélanger le skyr et la garniture."],{sweet:1});
+    S(`cottage_${k}`,`Cottage cheese ${n}`,[["cottage",150],...v],["Servir le cottage cheese avec la garniture."],{sweet:1})});
+  [["cacao","chocolat",[["cacao",8],["lait",250]]],["frouges","fruits rouges",[["frouges",100],["lait",250]]],["banane","banane",[["banane",100],["lait",250]]],["cafe","café-cacao",[["cacao",5],["lait",250]]]].forEach(([k,n,v])=>
+    S(`shake_${k}`,`Shake whey ${n}`,[["whey",30],...v],["Mixer ou secouer au shaker 20 s."],{sweet:1}));
+  [["cacao","cacao",[["cacao",8]]],["bc","cacahuète",[["bcac",15]]],["amandes","amandes",[["amandes",15]]],["noix","noix-miel",[["noix",10],["miel",5]]]].forEach(([k,n,v])=>
+    S(`balls_${k}`,`Energy balls ${n}`,[["avoine",40],["fblanc",50],["miel",10],...v],["Mélanger tous les ingrédients, former des boules.","30 min au frigo. Se gardent 4 jours."],{sweet:1,g:1}));
+  [["choco","Mug cake chocolat",[["cacao",10],["chocnoir",5]]],["banane","Mug cake banane",[["banane",60]]],["pomme","Mug cake pomme-cannelle",[["pomme",60]]]].forEach(([k,n,v])=>
+    S(`mug_${k}`,n,[["avoine",30],["oeuf",60],["skyr",60],["miel",5],...v],["Mélanger dans un grand mug.","1 min 30 au micro-ondes."],{sweet:1,g:1}));
+  [["frouges","Muffins protéinés aux fruits rouges",[["frouges",50]]],["choco","Muffins protéinés au chocolat",[["chocnoir",10]]],["banane","Muffins banane-avoine",[["banane",60]]]].forEach(([k,n,v])=>
+    S(`muffin_${k}`,n,[["avoine",35],["oeuf",50],["fblanc",60],["miel",5],...v],["Mixer avoine, œuf, fromage blanc et miel, ajouter la garniture.","Verser dans des moules, 20 min à 180 °C."],{sweet:1,g:1}));
+  [["frouges","fruits rouges",[["frouges",80]]],["choco","chocolat",[["cacao",6],["chocnoir",5]]],["mangue","mangue",[["mangue",80]]],["citron","citron",[["miel",8]]]].forEach(([k,n,v])=>
+    S(`cheesecake_${k}`,`Cheesecake express ${n}`,[["skyr",150],["fblanc",50],["biscuit",20],...v],["Émietter les biscuits au fond d'un verre.","Couvrir du skyr fouetté avec le fromage blanc"+(k==="citron"?", le zeste et le miel.":"."),"Ajouter la garniture, 30 min au frigo."],{sweet:1,g:1}));
+  S("tiramisu","Tiramisu protéiné",[["skyr",150],["biscuit",20],["cacao",4],["miel",8]],["Tremper les biscuits dans du café.","Alterner biscuits et skyr sucré au miel.","Saupoudrer de cacao, 1 h au frigo."],{sweet:1,g:1});
+  S("mousse_choco","Mousse au chocolat au tofu soyeux",[["tofusoyeux",200],["chocnoir",20],["miel",5]],["Faire fondre le chocolat.","Mixer avec le tofu soyeux et le miel.","2 h au frigo."],{sweet:1,g:1});
+  S("flan","Flan protéiné à la vanille",[["oeuf",60],["lait",200],["skyr",80],["miel",10]],["Fouetter œuf, lait, skyr, miel et vanille.","Cuire 35 min à 160 °C au bain-marie."],{sweet:1,g:1});
+  S("semoule_lait","Semoule au lait protéinée",[["semoule",30],["lait",250],["skyr",80],["miel",8]],["Cuire la semoule 5 min dans le lait avec la vanille.","Tiédir, ajouter skyr et miel."],{sweet:1,g:1});
+  S("riz_lait_cacao","Riz au lait au cacao",[["riz",30],["lait",250],["cacao",6],["skyr",80],["miel",8]],["Cuire le riz dans le lait 25 min à feu doux.","Ajouter le cacao, le miel et le skyr tiède."],{sweet:1,g:1});
+  S("pudding_avoine","Pudding avoine-chocolat",[["avoine",30],["lait",200],["cacao",6],["skyr",100]],["Cuire l'avoine dans le lait avec le cacao 4 min.","Ajouter le skyr, servir froid."],{sweet:1});
+  S("banana_bread","Banana bread protéiné (1 part)",[["banane",60],["avoine",35],["oeuf",40],["fblanc",50],["noix",8]],["Écraser la banane, mélanger tous les ingrédients.","45 min à 180 °C dans un moule à cake (recette × 6)."],{sweet:1,g:1});
+  S("brownie","Brownie aux haricots noirs (1 part)",[["hnoir",80],["oeuf",40],["cacao",10],["chocnoir",10],["miel",10]],["Mixer tous les ingrédients.","25 min à 180 °C (recette × 6)."],{sweet:1,g:1});
+  S("cookies_bc","Cookies beurre de cacahuète",[["bcac",20],["avoine",30],["oeuf",30],["miel",8]],["Mélanger, former des cookies.","10 min à 180 °C."],{sweet:1,g:1});
+  [["frouges","Crumble fruits rouges et skyr",[["frouges",120]]],["banane","Crumble banane-chocolat et skyr",[["banane",100],["chocnoir",5]]]].forEach(([k,n,v])=>S(`crumble_${k}`,n,[["skyr",150],["avoine",30],["bcac",5],["miel",5],...v],["Chauffer les fruits 2 min.","Dorer l'avoine avec le beurre de cacahuète et le miel.","Servir sur le skyr."],{sweet:1,g:1}));
+  S("oeufs_durs","Œufs durs et pain complet",[["oeuf",120],["pain",50]],["Cuire les œufs 9 min, les écaler.","Servir avec le pain."]);
+  S("edamame_sel","Edamames et yaourt",[["edamame",120],["yaourt",125]],["Cuire les edamames 3 min, saler légèrement."]);
+  S("houmous","Houmous maison et bâtonnets de carotte",[["pchiche",120],["huile",8],["carotte",120],["pain",30]],["Mixer les pois chiches avec l'huile, le citron, l'ail et un peu d'eau.","Servir avec les carottes en bâtonnets."]);
+  S("cottage_concombre","Cottage cheese, concombre et pain",[["cottage",150],["concombre",100],["pain",40]],["Couper le concombre, servir avec le cottage et le pain."]);
+  S("tartine_thon","Tartine thon-fromage frais",[["thon",80],["fblanc",40],["pain",50]],["Mélanger thon et fromage blanc, tartiner."]);
+  S("roules_jambon","Roulés jambon et cottage",[["jambon",80],["cottage",80],["concombre",60]],["Tartiner le jambon de cottage, ajouter le concombre, rouler."]);
+  S("roules_dinde","Wrap dinde-fromage frais",[["dinde",80],["tortilla",60],["fblanc",40],["salade",20]],["Cuire la dinde en lanières.","Garnir la tortilla, rouler."]);
+  S("amandes_yaourt","Yaourt, amandes et pomme",[["yaourt",125],["amandes",20],["pomme",120]],["Servir le yaourt avec la pomme en dés et les amandes."],{sweet:1});
+  S("pomme_bc","Pomme et beurre de cacahuète, skyr",[["pomme",150],["bcac",15],["skyr",100]],["Couper la pomme en quartiers, les tremper dans le beurre de cacahuète."],{sweet:1});
+  S("lait_choco","Lait chocolaté protéiné",[["lait",300],["cacao",8],["skyr",80],["miel",5]],["Fouetter ou mixer le tout."],{sweet:1});
+  S("surimi_snack","Surimi et fromage blanc aux herbes",[["surimi",100],["fblanc",100],["concombre",80]],["Mélanger le fromage blanc avec ciboulette et citron, servir en dip."]);
+  S("tofu_snack","Tofu grillé au soja",[["tofu",150],["soja",10],["huile",5]],["Dorer le tofu en dés, déglacer à la sauce soja."]);
+  S("saumon_snack","Blinis maison au saumon fumé",[["saumonfume",50],["farine",30],["oeuf",30],["fblanc",50]],["Fouetter farine, œuf et la moitié du fromage blanc, cuire des petits blinis.","Garnir du reste de fromage blanc et du saumon."],{g:1});
+  S("pancake_snack","Mini pancakes avoine-skyr",[["avoine",30],["oeuf",60],["skyr",80],["frouges",50]],["Mixer avoine, œuf et skyr, cuire des mini pancakes.","Servir avec les fruits."],{sweet:1,g:1});
+  return out;
+}
+{const nrm=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]+/g," ").trim();
+ const seen=new Set(RECIPES.map(r=>nrm(r.n))),ids=new Set(RECIPES.map(r=>r.id));
+ // generated variants that duplicate an existing hand-written recipe
+ const SKIP=new Set(["pasta_bolo_pst","pasta_bolo_boeuf","pasta_bolo_lentille","chili_pst","tofu_general_tao","wok_Padtha_tofu","ramen_poulet","bowl_teriyaki_tempeh","bowl_teriyaki_poulet","bowl_coreen_boeuf","risotto_poulet_champi","bowl_poke_thon","bowl_buddha_tofu","curry_poulet_epinard"].map(x=>"x_"+x));
+ genRecipes().forEach(r=>{if(SKIP.has(r.id)||seen.has(nrm(r.n))||ids.has(r.id))return;seen.add(nrm(r.n));ids.add(r.id);RECIPES.push(r)})}
 const GOURMAND_OLD=["pancakes","pain_perdu","shakshuka","fajitas","pizza","hachis","wrap","chili_carne","risotto","bolo"];
 RECIPES.forEach(r=>{if(GOURMAND_OLD.includes(r.id))r.g=1});
 ["pain_perdu","pancakes","overnight","skyr_pomme","c_skyr_fr"].forEach(id=>{const r=RECIPES.find(x=>x.id===id);if(r)r.sweet=1});
 
 const NK=["kcal","p","carb","sug","fat","sat","fib","salt","fe","ca"];
-const DAIRY=["skyr","fblanc","lait","laitsoja","yaourt","cottage","whey","emmental","mozza","feta","cheddar","creme"];
+const DAIRY=["skyr","fblanc","lait","laitsoja","yaourt","cottage","whey","emmental","mozza","feta","cheddar","creme","ricotta","parmesan","chevre","halloumi"];
 function category(items,sweet){
   if(sweet)return "sweet";
   let best=null,bp=-1;items.forEach(([id,g])=>{const v=ING[id].p*g;if(v>bp){bp=v;best=id}});
   if(["poulet","cuisse","dinde"].includes(best))return "poultry";
-  if(["boeuf","jambon"].includes(best))return "beef";
+  if(ING[best].t.includes("red"))return "beef";
+  if(ING[best].t.includes("meat"))return "poultry";
   if(ING[best].t.includes("fish"))return "fish";
   if(best==="oeuf")return "egg";
   if(DAIRY.includes(best))return "dairy";
@@ -1337,15 +1716,15 @@ function renderPrix(){
     <button class="btn" data-scan>Scanner une étiquette</button>
     <button class="btn ghost" id="resetPrices">Effacer tous mes prix</button>`;
 }
-const FILTERS=[["all","Toutes"],["g","Gourmandes"],["matin","Petit-déj"],["plat","Plats"],["collation","Snacks & desserts"],["fit","Pour moi"]];
+const FILTERS=[["all","Toutes"],["fit","Pour moi"],["g","Gourmandes"],["matin","Petit-déj"],["plat","Plats"],["collation","Snacks & desserts"],["poultry","Volaille"],["beef","Bœuf & porc"],["fish","Poisson"],["egg","Œufs"],["vege","Végé"]];
 function renderRecettes(){
   const v=document.getElementById("v-recettes");
   const q=recQuery.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-  const L=RECIPES.filter(r=>(recFilter==="all"||(recFilter==="g"&&r.g)||r.type===recFilter||(recFilter==="fit"&&eligible(r,profile)&&!banned.has(r.id)))
+  const L=RECIPES.filter(r=>(recFilter==="all"||(recFilter==="g"&&r.g)||r.type===recFilter||recFilter===r.cat||(recFilter==="vege"&&!r.tags.has("meat")&&!r.tags.has("fish"))||(recFilter==="fit"&&eligible(r,profile)&&!banned.has(r.id)))
     &&(!q||r.n.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").includes(q)));
   v.innerHTML=`<div class="hello"><p class="eyebrow">${RECIPES.length} recettes, ${RECIPES.filter(r=>r.g).length} gourmandes</p><h1>Recettes</h1></div>
     <label class="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr">Chercher une recette</span><input id="recq" type="search" placeholder="Poulet, tiramisu, wrap…" value="${esc(recQuery)}"></label>
-    <div class="chips" role="group" aria-label="Filtrer">${FILTERS.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${recFilter===k}">${l}</button>`).join("")}</div>
+    <div class="chips wrap" role="group" aria-label="Filtrer">${FILTERS.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${recFilter===k}">${l}</button>`).join("")}</div>
     <div class="rgrid" id="rgrid">${L.map(r=>{const ok=eligible(r,profile),c=rCost(r);return `<button class="rcard ${banned.has(r.id)||!ok?"banned":""}" data-rec="${r.id}">
       <span class="tile cat-${r.cat}">${icon(r.cat)}${nsBadge(r.ns)}${banned.has(r.id)?`<span class="tag">Exclue</span>`:!ok?`<span class="tag">Hors régime</span>`:r.g?`<span class="tag g">Gourmand</span>`:""}</span>
       <b>${esc(r.n)}</b>
@@ -2643,7 +3022,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-01-1";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-01-2";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
