@@ -91,3 +91,6 @@ create policy "voir bravos" on public.kudos for select using (exists (
 create policy "donner bravo" on public.kudos for insert with check (user_id = auth.uid() and exists (
   select 1 from activities a where a.id = activity_id and are_friends(auth.uid(), a.user_id)));
 create policy "retirer bravo" on public.kudos for delete using (user_id = auth.uid());
+
+-- Accès pour les comptes connectés (la sécurité reste assurée par les règles ci-dessus).
+grant select, insert, update, delete on public.social_profiles, public.friendships, public.activities, public.kudos to authenticated;
