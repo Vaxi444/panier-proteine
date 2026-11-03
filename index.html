@@ -479,6 +479,7 @@ h2.sect{font-family:var(--f-display);font-size:.8rem;font-weight:700;letter-spac
 .chips.wrap{flex-wrap:wrap;overflow:visible}
 .rcard{content-visibility:auto;contain-intrinsic-size:auto 260px}
 .gymex{border-top:1px solid var(--line);padding:10px 0}.gymex:first-child{border-top:0}.setgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.setgrid input{text-align:center}
+.filters{display:grid;gap:8px}.fgroup{display:grid;gap:4px}.fgroup .blk{margin:0}.rcard .note{font-size:.78rem;color:var(--warn);margin:0}.rcard .note.okmiss{color:var(--ok)}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -1342,7 +1343,7 @@ let seed=store.get("seed",7);
 let checked=new Set(store.get("checked",[]));
 let prices=store.get("prices",{});
 let crousOv=store.get("crousOv",{}); // "day-key" -> {plate,p1,p2} for what was actually taken
-let plan=null,courseMode="rayon",recFilter="all",recQuery="",wiz=null;
+let plan=null,courseMode="rayon",recQuery="",wiz=null;
 const todayIdx=(new Date().getDay()+6)%7;let day=todayIdx;
 const monday=new Date();monday.setHours(12,0,0,0);monday.setDate(monday.getDate()-todayIdx);
 const dateOf=i=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d};
@@ -1723,19 +1724,51 @@ function renderPrix(){
     <button class="btn" data-scan>Scanner une étiquette</button>
     <button class="btn ghost" id="resetPrices">Effacer tous mes prix</button>`;
 }
-const FILTERS=[["all","Toutes"],["fit","Pour moi"],["g","Gourmandes"],["matin","Petit-déj"],["plat","Plats"],["collation","Snacks & desserts"],["poultry","Volaille"],["beef","Bœuf & porc"],["fish","Poisson"],["egg","Œufs"],["vege","Végé"]];
+/* Recipe filters: options of the same group add up (OR), groups narrow each other (AND). */
+const FGROUPS=[["Repas",[["matin","Petit-déj"],["plat","Plats"],["collation","Snacks & desserts"]]],
+  ["Protéine",[["poultry","Volaille"],["beef","Bœuf & porc"],["fish","Poisson"],["egg","Œufs"],["vege","Végé"]]],
+  ["Options",[["fit","Pour moi"],["g","Gourmandes"],["fridge","Avec mon frigo"]]]];
+let recF=new Set(store.get("recf",[])),fridge=new Set(store.get("fridge",[])),frQ="";
+const PANTRY=new Set(["huile","soja","miel","farine","chapelure"]);
+const isVege=r=>!r.tags.has("meat")&&!r.tags.has("fish");
+const missingOf=r=>r.i.map(([id])=>id).filter(id=>!PANTRY.has(id)&&!fridge.has(id));
+const nrmQ=x=>x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function recMatch(r){
+  const has=k=>recF.has(k);
+  const ty=FGROUPS[0][1].map(x=>x[0]).filter(has),pr=FGROUPS[1][1].map(x=>x[0]).filter(has);
+  if(ty.length&&!ty.includes(r.type))return false;
+  if(pr.length&&!pr.some(k=>k==="vege"?isVege(r):r.cat===k))return false;
+  if(has("g")&&!r.g)return false;
+  if(has("fit")&&!(eligible(r,profile)&&!banned.has(r.id)))return false;
+  if(has("fridge")&&missingOf(r).length>2)return false;
+  return true;
+}
+function fridgeHtml(){
+  const q=nrmQ(frQ.trim()),ids=Object.keys(ING).filter(id=>!PANTRY.has(id));
+  const sel=ids.filter(id=>fridge.has(id)).sort((a,b)=>ING[a].n.localeCompare(ING[b].n));
+  const opts=ids.filter(id=>!fridge.has(id)&&(!q||nrmQ(ING[id].n).includes(q)));
+  return `<div class="box"><h3>Mon frigo et mes placards</h3>
+    <p class="note">Coche ce que tu as. Les recettes s'affichent si elles ne demandent pas plus de 2 ingrédients en plus. Huile, sauce soja, miel, farine et chapelure sont supposés au placard.</p>
+    ${sel.length?`<div class="chips wrap">${sel.map(id=>`<button class="chip" data-fr="${id}" aria-pressed="true">${esc(ING[id].n)} ✕</button>`).join("")}</div><button class="btn sm ghost" data-frclear style="justify-self:start">Tout vider</button>`:`<p class="muted">Ton frigo est vide pour l'instant.</p>`}
+    <label class="search"><span class="sr">Chercher un ingrédient</span><input id="frq" type="search" placeholder="Ajouter : œufs, riz, tomates…" value="${esc(frQ)}"></label>
+    ${AISLES.map((a,ai)=>{const L=opts.filter(id=>ING[id].a===ai).sort((x,y)=>ING[x].n.localeCompare(ING[y].n));return L.length?`<p class="blk">${a}</p><div class="chips wrap">${L.map(id=>`<button class="chip" data-fr="${id}" aria-pressed="false">${esc(ING[id].n)}</button>`).join("")}</div>`:""}).join("")||`<p class="muted">Aucun ingrédient ne correspond.</p>`}</div>`;
+}
 function renderRecettes(){
   const v=document.getElementById("v-recettes");
-  const q=recQuery.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-  const L=RECIPES.filter(r=>(recFilter==="all"||(recFilter==="g"&&r.g)||r.type===recFilter||recFilter===r.cat||(recFilter==="vege"&&!r.tags.has("meat")&&!r.tags.has("fish"))||(recFilter==="fit"&&eligible(r,profile)&&!banned.has(r.id)))
-    &&(!q||r.n.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").includes(q)));
+  const q=nrmQ(recQuery.trim()),fr=recF.has("fridge");
+  let L=RECIPES.filter(r=>recMatch(r)&&(!q||nrmQ(r.n).includes(q)));
+  if(fr)L=L.map(r=>({r,m:missingOf(r)})).sort((x,y)=>x.m.length-y.m.length||y.r.prot-x.r.prot).map(x=>x.r);
   v.innerHTML=`<div class="hello"><p class="eyebrow">${RECIPES.length} recettes, ${RECIPES.filter(r=>r.g).length} gourmandes</p><h1>Recettes</h1></div>
     <label class="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr">Chercher une recette</span><input id="recq" type="search" placeholder="Poulet, tiramisu, wrap…" value="${esc(recQuery)}"></label>
-    <div class="chips wrap" role="group" aria-label="Filtrer">${FILTERS.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${recFilter===k}">${l}</button>`).join("")}</div>
-    <div class="rgrid" id="rgrid">${L.map(r=>{const ok=eligible(r,profile),c=rCost(r);return `<button class="rcard ${banned.has(r.id)||!ok?"banned":""}" data-rec="${r.id}">
+    <div class="filters">${FGROUPS.map(([g,F])=>`<div class="fgroup"><span class="blk">${g}</span><div class="chips wrap" role="group" aria-label="${g}">${F.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${recF.has(k)}">${l}</button>`).join("")}</div></div>`).join("")}</div>
+    <div class="row" style="justify-content:space-between"><span class="muted"><b>${L.length}</b> recette${L.length>1?"s":""}${recF.size?"":", aucun filtre"}</span>${recF.size?`<button class="btn sm ghost" data-filter="all">Effacer les filtres</button>`:""}</div>
+    ${fr?fridgeHtml():""}
+    ${fr&&!fridge.size?`<div class="welcome"><p>Coche ce que tu as dans la liste ci-dessus pour voir ce que tu peux cuisiner.</p></div>`:""}
+    <div class="rgrid" id="rgrid">${L.map(r=>{const ok=eligible(r,profile),c=rCost(r),m=fr?missingOf(r):null;return `<button class="rcard ${banned.has(r.id)||!ok?"banned":""}" data-rec="${r.id}">
       <span class="tile cat-${r.cat}">${icon(r.cat)}${nsBadge(r.ns)}${banned.has(r.id)?`<span class="tag">Exclue</span>`:!ok?`<span class="tag">Hors régime</span>`:r.g?`<span class="tag g">Gourmand</span>`:""}</span>
       <b>${esc(r.n)}</b>
-      <span class="facts"><span class="fact p">${n0(r.prot)} g prot.</span><span class="fact">${n0(r.kcal)} kcal</span><span class="fact">${eur(c)}</span></span></button>`}).join("")||`<p class="muted">Aucune recette ne correspond.</p>`}</div>
+      ${m?`<span class="note ${m.length?"":"okmiss"}">${m.length?"Il manque : "+m.map(id=>esc(ING[id].n.toLowerCase())).join(", "):"Tout est dans ton frigo"}</span>`:""}
+      <span class="facts"><span class="fact p">${n0(r.prot)} g prot.</span><span class="fact">${n0(r.kcal)} kcal</span><span class="fact">${eur(c)}</span></span></button>`}).join("")||`<p class="muted">Aucune recette ne correspond. Retire un filtre${fr?" ou ajoute des ingrédients":""}.</p>`}</div>
     <p class="note">Valeurs pour une portion de base. Dans ton plan, les portions sont ajustées à tes besoins. Le Nutri-Score est estimé à partir des ingrédients.</p>`;
 }
 
@@ -1894,7 +1927,9 @@ document.addEventListener("click",e=>{
   else if(d.tcrous){const j=d.tcrous==="dej"?0:1;profile.crous.days[day][j]=profile.crous.days[day][j]?0:1;saveProfile();fillForm();refresh();toast(profile.crous.days[day][j]?"Repas au CROUS : le reste de ta journée s'ajuste.":"Repas à cuisiner ajouté à ta liste.")}
   else if(d.crreset){delete crousOv[day+"-"+d.crreset];store.set("crousOv",crousOv);refresh();const i=plan.days[day].findIndex(m=>m.key===d.crreset);if(i>=0)openCrous(i)}
   else if(d.rec)openRecipe(d.rec,1);
-  else if(d.filter){recFilter=d.filter;renderRecettes()}
+  else if(d.filter){if(d.filter==="all")recF.clear();else recF.has(d.filter)?recF.delete(d.filter):recF.add(d.filter);store.set("recf",[...recF]);renderRecettes()}
+  else if(d.fr){fridge.has(d.fr)?fridge.delete(d.fr):fridge.add(d.fr);store.set("fridge",[...fridge]);const y=window.scrollY;renderRecettes();window.scrollTo(0,y)}
+  else if("frclear" in d){fridge.clear();store.set("fridge",[]);renderRecettes()}
   else if(d.price)openPrice(d.price);
   else if(d.pstore){priceStore=d.pstore;openPrice(d.pid)}
   else if(d.pdel){if(prices[d.pdel]){delete prices[d.pdel][priceStore];store.set("prices",prices)}closeSheet();refresh();toast("Prix supprimé.")}
@@ -1924,7 +1959,8 @@ document.addEventListener("change",e=>{
     toast("Repas mis à jour, ta journée s'ajuste.");
   }
 });
-document.addEventListener("input",e=>{if(e.target.id==="recq"){recQuery=e.target.value;const pos=e.target.selectionStart;renderRecettes();const n=document.getElementById("recq");n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}});
+document.addEventListener("input",e=>{if(e.target.id==="frq"){frQ=e.target.value;const pos=e.target.selectionStart,y=window.scrollY;renderRecettes();window.scrollTo(0,y);const n=document.getElementById("frq");n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}return}
+  if(e.target.id==="recq"){recQuery=e.target.value;const pos=e.target.selectionStart;renderRecettes();const n=document.getElementById("recq");n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}});
 document.addEventListener("submit",e=>{
   if(e.target.id==="priceForm"){
     e.preventDefault();const id=e.target.dataset.id,v=parseFloat(String(document.getElementById("pf-eur").value).replace(",",".")),g=+document.getElementById("pf-g").value;
@@ -2593,7 +2629,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{const k=e.target.dataset.spset;if(!k||!training?.cur)return;const[ei,si]=k.split("-").map(Number);training.cur.ex[ei].sets[si]=Math.max(0,+e.target.value||0);saveTraining()});
 
 /* ===================== Cloud sync: the viewer's private db subtree, localStorage as fallback ===================== */
-const APP_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
+const APP_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
 let cloud=null,cloudUid=null,cloudReady=false;const dirty=new Set();let flushT=null,flushing=false;
 function scheduleCloud(k){if(!cloudReady)return;dirty.add(k==="training"?"training":"app");clearTimeout(flushT);flushT=setTimeout(flushCloud,1200)}
 function appBody(){return{profile:exampleMode?null:profile,banned:[...banned],seed,checked:[...checked],prices,crousOv,journal,outOv,ingOv,running,updatedAt:Date.now()}}
@@ -3035,7 +3071,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-02-2";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-03-1";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3158,7 +3194,7 @@ async function runBarcode(code,file){
   }catch(e){scan.state="idle";scan.err=inClaude()?"La recherche Open Food Facts n'est disponible que dans la version installée sur ton téléphone. Ici, utilise la photo du tableau nutritionnel.":(e instanceof TypeError?"Impossible de joindre Open Food Facts : vérifie ta connexion.":e.message||"Recherche impossible.")}
   const b=document.querySelector(".sheet .body");if(b)b.innerHTML=scanHtml();
 }
-const BACKUP_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
+const BACKUP_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
 function exportData(){
   const data={app:"panier-proteine",version:1,date:new Date().toISOString()};
   BACKUP_KEYS.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem("pp_"+k)||"null")}catch(e){}});
@@ -3180,7 +3216,7 @@ document.addEventListener("change",e=>{if(e.target.id==="bc-file"&&e.target.file
    Email + password login. All app data is saved as one JSON row per user, protected by row-level
    security (each account reads and writes only its own row). Plain REST calls, no library. */
 const SB=(window.PP_CONFIG&&window.PP_CONFIG.supabaseUrl&&window.PP_CONFIG.supabaseKey)?{url:window.PP_CONFIG.supabaseUrl.replace(/\/$/,""),key:window.PP_CONFIG.supabaseKey}:null;
-const SYNC_KEYS=["profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
+const SYNC_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
 let sbSession=(()=>{try{return JSON.parse(localStorage.getItem("pp_sbsession")||"null")}catch(e){return null}})();
 let sbState={busy:false,err:null,last:(()=>{try{return +localStorage.getItem("pp_sblast")||0}catch(e){return 0}})()};
 let sbTimer=null,sbPushing=false;
