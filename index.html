@@ -480,6 +480,7 @@ h2.sect{font-family:var(--f-display);font-size:.8rem;font-weight:700;letter-spac
 .rcard{content-visibility:auto;contain-intrinsic-size:auto 260px}
 .gymex{border-top:1px solid var(--line);padding:10px 0}.gymex:first-child{border-top:0}.setgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.setgrid input{text-align:center}
 .filters{display:grid;gap:8px}.fgroup{display:grid;gap:4px}.fgroup .blk{margin:0}.rcard .note{font-size:.78rem;color:var(--warn);margin:0}.rcard .note.okmiss{color:var(--ok)}
+.rwrap{position:relative;display:grid}.rwrap .rcard{height:100%}.radd{position:absolute;top:18px;right:18px;z-index:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:32px;padding:0 10px;font-weight:700;font-size:.8rem}.radd.on{background:var(--accent);border-color:var(--accent);color:#fff}.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;text-decoration:underline}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -1667,8 +1668,30 @@ function renderPlan(){
 `;
 }
 
+/* Shopping list from chosen recipes: grams of one base portion x number of portions. */
+let basket=store.get("basket",{}),listSrc=store.get("listsrc","plan"),hh=store.get("hh",1),useFridge=store.get("usefridge",false);
+const basketIds=()=>Object.keys(basket).filter(id=>RM[id]);
+const basketPortions=()=>basketIds().reduce((a,id)=>a+basket[id],0);
+function saveBasket(){store.set("basket",basket)}
+function setListSrc(x){listSrc=x;store.set("listsrc",x)}
+function basketAdd(id){basket[id]=basket[id]||hh;saveBasket();if(listSrc!=="basket")setListSrc("basket")}
+function bblockHtml(id){const n=basket[id];
+  return n?`<div class="row" style="justify-content:space-between"><span>Dans tes courses</span><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm ghost" data-bq="${id}|-1" aria-label="Une portion de moins">−</button><b style="min-width:84px;text-align:center">${n} portion${n>1?"s":""}</b><button class="btn sm ghost" data-bq="${id}|1" aria-label="Une portion de plus">+</button></span></div><button class="btn sm ghost" data-bq="${id}|0">Retirer des courses</button>`
+    :`<button class="btn primary block" data-badd="${id}">Ajouter à mes courses (${hh} portion${hh>1?"s":""})</button>`}
+function basketHtml(){
+  const ids=basketIds();
+  return `<div class="box"><h3>Recettes choisies</h3>
+    <div class="row" style="justify-content:space-between"><span>Portions par recette ajoutée<small class="muted" style="display:block">par exemple le nombre de colocs qui mangent</small></span><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm ghost" data-hh="-1" aria-label="Moins">−</button><b style="min-width:28px;text-align:center">${hh}</b><button class="btn sm ghost" data-hh="1" aria-label="Plus">+</button></span></div>
+    ${ids.length?ids.map(id=>{const r=RM[id],n=basket[id];return `<div class="hrow"><span><b>${esc(r.n)}</b><small>${n} portion${n>1?"s":""} · ${eur(rCost(r)*n)} · <button class="linkbtn" data-rec="${id}">voir</button></small></span>
+      <span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm ghost" data-bq="${id}|-1" aria-label="Une portion de moins : ${esc(r.n)}">−</button><b style="min-width:24px;text-align:center">${n}</b><button class="btn sm ghost" data-bq="${id}|1" aria-label="Une portion de plus : ${esc(r.n)}">+</button></span></div>`}).join("")
+      :`<p class="muted">Aucune recette pour l'instant. Choisis-les dans l'onglet Recettes avec le bouton "+ Courses".</p>`}
+    <div class="row"><button class="btn primary" data-v="recettes">Ajouter des recettes</button>${ids.length?`<button class="btn ghost" data-bclear>Vider la sélection</button>`:""}</div>
+    ${fridge.size?`<div class="seg"><label><input type="checkbox" id="usefridge" ${useFridge?"checked":""}><span>Ne pas lister ce qui est déjà dans mon frigo (${fridge.size} produits)</span></label></div>`:""}</div>`;
+}
 function aggregate(){
   const tot={};
+  if(listSrc==="basket"){basketIds().forEach(id=>RM[id].i.forEach(([iid,g])=>{tot[iid]=(tot[iid]||0)+g*basket[id]}));
+    if(useFridge)Object.keys(tot).forEach(iid=>{if(fridge.has(iid))delete tot[iid]});return tot}
   plan.days.flat().forEach(m=>{if(m.crous||m.out)return;R(m.id).i.forEach(([id,g])=>{tot[id]=(tot[id]||0)+g*m.f});(m.extras||[]).forEach(e=>{tot[e.id]=(tot[e.id]||0)+e.g})});
   return tot;
 }
@@ -1680,8 +1703,10 @@ function itemHtml(it){
 }
 function renderCourses(){
   const v=document.getElementById("v-courses");
-  if(plan.error){v.innerHTML=`<div class="alert">${esc(plan.error)}</div>`;return}
-  const items=courseItems(),st=activeStores(),all=mealsNut(plan.days.flat());
+  const bk=listSrc==="basket";
+  const srcSw=`<div class="seg2" role="group" aria-label="Source de la liste"><button class="chip" data-lsrc="plan" aria-pressed="${!bk}">Mon plan de la semaine</button><button class="chip" data-lsrc="basket" aria-pressed="${bk}">Mes recettes (${basketIds().length})</button></div>`;
+  if(plan.error&&!bk){v.innerHTML=`<div class="hello"><h1>Tes courses</h1></div>${srcSw}<div class="alert">${esc(plan.error)}</div>`;return}
+  const items=courseItems(),st=activeStores(),all=bk?{crousN:0}:mealsNut(plan.days.flat());
   let est=0,packTotal=0;items.forEach(it=>{est+=it.g*it.pr.v/100;packTotal+=it.np*it.x.pack*it.pr.v/100});
   let body="";
   if(courseMode==="rayon"){
@@ -1694,20 +1719,28 @@ function renderCourses(){
       return L.length?`<div class="aisle"><span>${gp.n}</span><span>${gp.k==="est"?"":eur(sub)}</span></div>${L.map(itemHtml).join("")}`:""}).join("");
   }
   const known=items.filter(it=>it.pr.src!=="est").length,left=items.length-items.filter(it=>checked.has(it.id)).length;
-  v.innerHTML=`<div class="hello"><p class="eyebrow">Semaine du ${monday.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><h1>Tes courses</h1></div>
-    <p class="muted">${left} produit${left>1?"s":""} à acheter${all.crousN?`. Tes ${all.crousN} repas au CROUS ne sont pas dans la liste.`:"."}</p>
+  const nP=basketPortions();
+  v.innerHTML=`<div class="hello"><p class="eyebrow">${bk?`${basketIds().length} recette${basketIds().length>1?"s":""}, ${nP} portion${nP>1?"s":""}`:"Semaine du "+monday.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><h1>Tes courses</h1></div>
+    ${srcSw}
+    ${bk?basketHtml():""}
+    ${bk&&!items.length?"":`<p class="muted">${left} produit${left>1?"s":""} à acheter${all.crousN?`. Tes ${all.crousN} repas au CROUS ne sont pas dans la liste.`:"."}</p>`}
     <div class="chips" role="group" aria-label="Classer la liste">
       <button class="chip" data-mode="rayon" aria-pressed="${courseMode==="rayon"}">Par rayon</button>
       <button class="chip" data-mode="magasin" aria-pressed="${courseMode==="magasin"}">Par magasin</button><button class="chip" data-v="prix">Mes prix</button><button class="chip" data-receipt>Scanner un ticket</button><button class="chip" data-scan>Scanner une étiquette</button></div>
     ${!st.length?`<div class="alert"><span>Choisis tes magasins dans ton profil pour des prix plus justes.</span></div>`:courseMode==="magasin"&&!known?`<div class="welcome"><p>${st.length>1?"Sans prix relevé, tout va au magasin le moins cher d'après les comparatifs nationaux.":"Les prix sont estimés pour "+STORES[st[0]].n+"."} Touche un prix pour noter le tien : chaque produit ira ensuite là où tu l'as vu le moins cher.</p></div>`:""}
     <div class="list">${body}
-     <div class="tot"><span>Consommé dans la semaine</span><span>${eur(est)}</span></div>
+     <div class="tot"><span>${bk?"Coût des recettes":"Consommé dans la semaine"}</span><span>${eur(est)}${bk&&nP?` <small class="muted">(${eur(est/nP)} par portion)</small>`:""}</span></div>
      <div class="tot light"><span>À payer en caisse (paquets entiers)</span><span>${eur(packTotal)}</span></div>
      <div class="tot light"><span>Prix relevés par toi</span><span>${known} sur ${items.length}</span></div>
     </div>
-    <div class="row">${(courseMode==="magasin"?st:[null]).map(s=>`<button class="btn" data-copy="${s||"all"}">Copier ${s?"la liste "+STORES[s].n:"la liste"}</button>`).join("")}<button class="btn ghost" id="uncheck">Tout décocher</button></div>
+    <div class="row">${navigator.share?`<button class="btn primary" data-share>Partager la liste</button>`:""}${(courseMode==="magasin"?st:[null]).map(s=>`<button class="btn" data-copy="${s||"all"}">Copier ${s?"la liste "+STORES[s].n:"la liste"}</button>`).join("")}<button class="btn ghost" id="uncheck">Tout décocher</button></div>
     <div class="row">${st.map(s=>`<a class="btn sm ghost" href="${STORES[s].url}" target="_blank" rel="noopener">Site ${STORES[s].n}</a>`).join("")}</div>
     <p class="note">Les prix « estimé » sont des moyennes nationales 2026 ajustées à l'enseigne, à 15 ou 25 % près. Le reste des paquets entiers sert la semaine suivante. Sel, poivre, épices et ail ne sont pas comptés.</p>`;
+}
+function listText(which){
+  const items=courseItems().filter(it=>which==="all"||it.pr.src===which);
+  const head=(which==="all"?"Courses":"Courses "+STORES[which].n)+(listSrc==="basket"&&basketIds().length?"\nRecettes : "+basketIds().map(id=>RM[id].n+" (x"+basket[id]+")").join(", "):"");
+  return head+"\n"+AISLES.map((a,ai)=>{const L=items.filter(it=>it.x.a===ai&&!checked.has(it.id));return L.length?"\n"+a.toUpperCase()+"\n"+L.map(it=>"- "+it.x.n+" : "+it.np+" x "+it.x.pl).join("\n"):""}).filter(Boolean).join("\n");
 }
 function renderPrix(){
   const v=document.getElementById("v-prix"),st=activeStores();
@@ -1764,11 +1797,11 @@ function renderRecettes(){
     <div class="row" style="justify-content:space-between"><span class="muted"><b>${L.length}</b> recette${L.length>1?"s":""}${recF.size?"":", aucun filtre"}</span>${recF.size?`<button class="btn sm ghost" data-filter="all">Effacer les filtres</button>`:""}</div>
     ${fr?fridgeHtml():""}
     ${fr&&!fridge.size?`<div class="welcome"><p>Coche ce que tu as dans la liste ci-dessus pour voir ce que tu peux cuisiner.</p></div>`:""}
-    <div class="rgrid" id="rgrid">${L.map(r=>{const ok=eligible(r,profile),c=rCost(r),m=fr?missingOf(r):null;return `<button class="rcard ${banned.has(r.id)||!ok?"banned":""}" data-rec="${r.id}">
+    <div class="rgrid" id="rgrid">${L.map(r=>{const ok=eligible(r,profile),c=rCost(r),m=fr?missingOf(r):null,inB=basket[r.id];return `<div class="rwrap"><button class="radd ${inB?"on":""}" data-badd="${r.id}" aria-label="${inB?"Retirer des courses":"Ajouter aux courses"} : ${esc(r.n)}">${inB?"✓ x"+inB:"+ Courses"}</button><button class="rcard ${banned.has(r.id)||!ok?"banned":""}" data-rec="${r.id}">
       <span class="tile cat-${r.cat}">${icon(r.cat)}${nsBadge(r.ns)}${banned.has(r.id)?`<span class="tag">Exclue</span>`:!ok?`<span class="tag">Hors régime</span>`:r.g?`<span class="tag g">Gourmand</span>`:""}</span>
       <b>${esc(r.n)}</b>
       ${m?`<span class="note ${m.length?"":"okmiss"}">${m.length?"Il manque : "+m.map(id=>esc(ING[id].n.toLowerCase())).join(", "):"Tout est dans ton frigo"}</span>`:""}
-      <span class="facts"><span class="fact p">${n0(r.prot)} g prot.</span><span class="fact">${n0(r.kcal)} kcal</span><span class="fact">${eur(c)}</span></span></button>`}).join("")||`<p class="muted">Aucune recette ne correspond. Retire un filtre${fr?" ou ajoute des ingrédients":""}.</p>`}</div>
+      <span class="facts"><span class="fact p">${n0(r.prot)} g prot.</span><span class="fact">${n0(r.kcal)} kcal</span><span class="fact">${eur(c)}</span></span></button></div>`}).join("")||`<p class="muted">Aucune recette ne correspond. Retire un filtre${fr?" ou ajoute des ingrédients":""}.</p>`}</div>
     <p class="note">Valeurs pour une portion de base. Dans ton plan, les portions sont ajustées à tes besoins. Le Nutri-Score est estimé à partir des ingrédients.</p>`;
 }
 
@@ -1797,6 +1830,7 @@ function openRecipe(id,f,extras){
     <div class="box"><h3>Ingrédients</h3><ul>${r.i.map(([iid,g])=>{const p=price(iid);return `<li>${esc(ING[iid].n)} <span class="muted">${qty(iid,g*f)}</span> ${p.src!=="est"?srcTag(p.src):""}</li>`}).join("")}</ul></div>
     <div class="box"><h3>Préparation</h3><ol>${r.s.map(s=>`<li>${esc(s)}</li>`).join("")}</ol></div>
     ${extras&&extras.length?`<div class="box"><h3>Ajouté pour tes protéines</h3><ul>${extras.map(e=>`<li><b>${n0(e.g)} g de ${esc(ING[e.id].n.toLowerCase())}</b>, ${esc(e.how)} <span class="muted">(+${n0(e.p)} g de protéines, ${n0(ING[e.id].kcal*e.g/100)} kcal)</span></li>`).join("")}</ul><p class="note">La portion du plat a été réduite d'autant pour garder tes calories.</p></div>`:""}
+    <div class="box"><h3>Pour tes courses</h3><div id="bblock" style="display:grid;gap:8px">${bblockHtml(id)}</div></div>
     ${isB?`<button class="btn primary block" data-unban="${id}">Remettre cette recette dans mes plans</button>`:`<button class="btn block" data-ban="${id}">Je n'aime pas, ne plus la proposer</button>`}
     <p class="note">Nutri-Score estimé sur 100 g de plat (algorithme 2023 appliqué aux valeurs Ciqual des ingrédients, assaisonnement compris). Ce n'est pas un score certifié.</p>`,r.n);
 }
@@ -1934,11 +1968,15 @@ document.addEventListener("click",e=>{
   else if(d.pstore){priceStore=d.pstore;openPrice(d.pid)}
   else if(d.pdel){if(prices[d.pdel]){delete prices[d.pdel][priceStore];store.set("prices",prices)}closeSheet();refresh();toast("Prix supprimé.")}
   else if(d.mode){courseMode=d.mode;renderCourses()}
-  else if(d.copy){
-    const items=courseItems().filter(it=>d.copy==="all"||it.pr.src===d.copy);
-    const txt=(d.copy==="all"?"Courses":"Courses "+STORES[d.copy].n)+"\n"+AISLES.map((a,ai)=>{const L=items.filter(it=>it.x.a===ai);return L.length?"— "+a+"\n"+L.map(it=>"☐ "+it.x.n+" : "+it.np+" × "+it.x.pl).join("\n"):""}).filter(Boolean).join("\n");
-    copyText(txt);
-  }
+  else if(d.copy){copyText(listText(d.copy))}
+  else if("share" in d){navigator.share({title:"Courses",text:listText("all")}).catch(()=>{})}
+  else if(d.badd){const id=d.badd;if(basket[id]){delete basket[id];saveBasket();toast("Retirée de tes courses.")}else{basketAdd(id);toast(`Ajoutée à tes courses : ${hh} portion${hh>1?"s":""}.`)}
+    const bb=document.getElementById("bblock");if(bb)bb.innerHTML=bblockHtml(id);renderRecettes();renderCourses()}
+  else if(d.bq){const[id,dl]=d.bq.split("|");const n=+dl===0?0:(basket[id]||0)+(+dl);if(n>0)basket[id]=n;else delete basket[id];saveBasket();
+    const bb=document.getElementById("bblock");if(bb)bb.innerHTML=bblockHtml(id);renderCourses();renderRecettes()}
+  else if(d.hh){hh=Math.max(1,Math.min(12,hh+(+d.hh)));store.set("hh",hh);renderCourses()}
+  else if("bclear" in d){if(t.dataset.armed){basket={};saveBasket();renderCourses();renderRecettes()}else{t.dataset.armed="1";t.textContent="Appuie encore pour vider"}}
+  else if(d.lsrc){setListSrc(d.lsrc);renderCourses()}
   else if(d.ban){banned.add(d.ban);store.set("banned",[...banned]);closeSheet();refresh();toast("C'est noté, elle ne sera plus proposée.")}
   else if(d.unban){banned.delete(d.unban);store.set("banned",[...banned]);closeSheet();refresh();toast("Recette remise dans tes plans.")}
   else if("close" in d)closeSheet();
@@ -1959,6 +1997,7 @@ document.addEventListener("change",e=>{
     toast("Repas mis à jour, ta journée s'ajuste.");
   }
 });
+document.addEventListener("change",e=>{if(e.target.id==="usefridge"){useFridge=e.target.checked;store.set("usefridge",useFridge);renderCourses()}});
 document.addEventListener("input",e=>{if(e.target.id==="frq"){frQ=e.target.value;const pos=e.target.selectionStart,y=window.scrollY;renderRecettes();window.scrollTo(0,y);const n=document.getElementById("frq");n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}return}
   if(e.target.id==="recq"){recQuery=e.target.value;const pos=e.target.selectionStart;renderRecettes();const n=document.getElementById("recq");n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}});
 document.addEventListener("submit",e=>{
@@ -2629,7 +2668,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{const k=e.target.dataset.spset;if(!k||!training?.cur)return;const[ei,si]=k.split("-").map(Number);training.cur.ex[ei].sets[si]=Math.max(0,+e.target.value||0);saveTraining()});
 
 /* ===================== Cloud sync: the viewer's private db subtree, localStorage as fallback ===================== */
-const APP_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
+const APP_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
 let cloud=null,cloudUid=null,cloudReady=false;const dirty=new Set();let flushT=null,flushing=false;
 function scheduleCloud(k){if(!cloudReady)return;dirty.add(k==="training"?"training":"app");clearTimeout(flushT);flushT=setTimeout(flushCloud,1200)}
 function appBody(){return{profile:exampleMode?null:profile,banned:[...banned],seed,checked:[...checked],prices,crousOv,journal,outOv,ingOv,running,updatedAt:Date.now()}}
@@ -3071,7 +3110,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-03-1";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-12-1";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3194,7 +3233,7 @@ async function runBarcode(code,file){
   }catch(e){scan.state="idle";scan.err=inClaude()?"La recherche Open Food Facts n'est disponible que dans la version installée sur ton téléphone. Ici, utilise la photo du tableau nutritionnel.":(e instanceof TypeError?"Impossible de joindre Open Food Facts : vérifie ta connexion.":e.message||"Recherche impossible.")}
   const b=document.querySelector(".sheet .body");if(b)b.innerHTML=scanHtml();
 }
-const BACKUP_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
+const BACKUP_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
 function exportData(){
   const data={app:"panier-proteine",version:1,date:new Date().toISOString()};
   BACKUP_KEYS.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem("pp_"+k)||"null")}catch(e){}});
@@ -3216,7 +3255,7 @@ document.addEventListener("change",e=>{if(e.target.id==="bc-file"&&e.target.file
    Email + password login. All app data is saved as one JSON row per user, protected by row-level
    security (each account reads and writes only its own row). Plain REST calls, no library. */
 const SB=(window.PP_CONFIG&&window.PP_CONFIG.supabaseUrl&&window.PP_CONFIG.supabaseKey)?{url:window.PP_CONFIG.supabaseUrl.replace(/\/$/,""),key:window.PP_CONFIG.supabaseKey}:null;
-const SYNC_KEYS=["fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
+const SYNC_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
 let sbSession=(()=>{try{return JSON.parse(localStorage.getItem("pp_sbsession")||"null")}catch(e){return null}})();
 let sbState={busy:false,err:null,last:(()=>{try{return +localStorage.getItem("pp_sblast")||0}catch(e){return 0}})()};
 let sbTimer=null,sbPushing=false;
