@@ -481,6 +481,7 @@ h2.sect{font-family:var(--f-display);font-size:.8rem;font-weight:700;letter-spac
 .gymex{border-top:1px solid var(--line);padding:10px 0}.gymex:first-child{border-top:0}.setgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.setgrid input{text-align:center}
 .filters{display:grid;gap:8px}.fgroup{display:grid;gap:4px}.fgroup .blk{margin:0}.rcard .note{font-size:.78rem;color:var(--warn);margin:0}.rcard .note.okmiss{color:var(--ok)}
 .rwrap{position:relative;display:grid}.rwrap .rcard{height:100%}.radd{position:absolute;top:18px;right:18px;z-index:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:32px;padding:0 10px;font-weight:700;font-size:.8rem}.radd.on{background:var(--accent);border-color:var(--accent);color:#fff}.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;text-decoration:underline}
+.plthumb{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none}.plthumb.big{width:100%;height:180px;margin:6px 0}.plmeal{display:flex;gap:12px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);font:inherit;color:inherit}.plmeal .tile{width:64px;height:64px;flex:none}.pltot{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:4px;padding:12px}.pltot b{display:block;font-size:1.15rem}.pltot span{font-size:.75rem;color:var(--muted)}.plitem{display:grid;gap:6px;border-top:1px solid var(--line);padding:10px 0}.plitem small{display:block;color:var(--muted)}.plg{width:64px;text-align:center}.busybar{animation:pulse 1.2s ease-in-out infinite alternate}@keyframes pulse{from{opacity:.35}to{opacity:1}}
 /* bottom nav */
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabbar .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -1611,6 +1612,7 @@ function mealCard(m,i){
 }
 function renderPlan(){
   const v=document.getElementById("v-plan");
+  if(viewMode==="photo"&&!exampleMode){renderPhotoDay(v);return}
   if(plan.error){v.innerHTML=`<div class="alert">${esc(plan.error)}</div>`;return}
   const T=plan.T,all=mealsNut(plan.days.flat());
   const dm=plan.days[day],dn=mealsNut(dm);
@@ -1624,6 +1626,7 @@ function renderPlan(){
   v.innerHTML=`
    <div class="hello"><p class="eyebrow">${dateOf(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</p>
      <h1>${exampleMode?"Bienvenue !":isToday?"Ta journée":cap1(DAYS[day])}</h1></div>
+   ${exampleMode?"":modeSw()}
    ${exampleMode?`<div class="welcome"><h2>Voici une semaine d'exemple</h2><p>Elle est faite pour un étudiant de 72 kg qui veut prendre du muscle avec 40 € par semaine et mange au CROUS le midi en semaine. Réponds à quelques questions pour avoir la tienne.</p><button class="btn primary" data-wiz>Créer mon plan (2 min)</button></div>`:""}
    ${exampleMode?"":kcalCard()}
    <div class="card">
@@ -2668,7 +2671,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{const k=e.target.dataset.spset;if(!k||!training?.cur)return;const[ei,si]=k.split("-").map(Number);training.cur.ex[ei].sets[si]=Math.max(0,+e.target.value||0);saveTraining()});
 
 /* ===================== Cloud sync: the viewer's private db subtree, localStorage as fallback ===================== */
-const APP_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
+const APP_KEYS=["viewmode","basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","running","xsport"];
 let cloud=null,cloudUid=null,cloudReady=false;const dirty=new Set();let flushT=null,flushing=false;
 function scheduleCloud(k){if(!cloudReady)return;dirty.add(k==="training"?"training":"app");clearTimeout(flushT);flushT=setTimeout(flushCloud,1200)}
 function appBody(){return{profile:exampleMode?null:profile,banned:[...banned],seed,checked:[...checked],prices,crousOv,journal,outOv,ingOv,running,updatedAt:Date.now()}}
@@ -3082,6 +3085,7 @@ function coachContext(){
   }
   (profile.sports||[]).filter(k=>XS[k]&&xs[k]).forEach(k=>{const X=xs[k],L=X.logs.slice(-4);
     lines.push(`${xsName(k)} : ${X.prof.wd.length} séances/sem${k==="bike"||k==="swim"?`, objectif ${ENDU[k].goals[X.prof.goal][0]}, volume ${X.vol} min/sem`:k==="gym"?`, objectif ${GGOALS[X.prof.goal][0]}, charges ${Object.entries(X.st).filter(([,v])=>v.kg).map(([id,v])=>GX[id][0]+" "+v.kg+" kg").join(", ")}`:""}. Dernières séances : ${L.map(l=>`${l.d} ${l.n} ${l.dur||""} min${l.pain?" (douleur)":""}`).join(" | ")||"aucune"}.`)});
+  {const td=isoDay(new Date()),M=dayMeals(td);if(M.length){const t=dayTotals(td);lines.push(`Repas notés aujourd'hui (suivi photo, estimation) : ${M.map(m=>m.n).join(", ")}. Total ${n0(t.p)} g de protéines, ${n0(t.k)} kcal, ${n0(t.c)} g de glucides, ${n0(t.f)} g de lipides.`)}}
   lines.push("Constats automatiques : "+insights().map(i=>i.t).join(" ; "));
   return lines.join("\n");
 }
@@ -3110,7 +3114,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-12-1";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-12-2";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3233,7 +3237,7 @@ async function runBarcode(code,file){
   }catch(e){scan.state="idle";scan.err=inClaude()?"La recherche Open Food Facts n'est disponible que dans la version installée sur ton téléphone. Ici, utilise la photo du tableau nutritionnel.":(e instanceof TypeError?"Impossible de joindre Open Food Facts : vérifie ta connexion.":e.message||"Recherche impossible.")}
   const b=document.querySelector(".sheet .body");if(b)b.innerHTML=scanHtml();
 }
-const BACKUP_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
+const BACKUP_KEYS=["viewmode","basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","running","xsport"];
 function exportData(){
   const data={app:"panier-proteine",version:1,date:new Date().toISOString()};
   BACKUP_KEYS.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem("pp_"+k)||"null")}catch(e){}});
@@ -3255,7 +3259,7 @@ document.addEventListener("change",e=>{if(e.target.id==="bc-file"&&e.target.file
    Email + password login. All app data is saved as one JSON row per user, protected by row-level
    security (each account reads and writes only its own row). Plain REST calls, no library. */
 const SB=(window.PP_CONFIG&&window.PP_CONFIG.supabaseUrl&&window.PP_CONFIG.supabaseKey)?{url:window.PP_CONFIG.supabaseUrl.replace(/\/$/,""),key:window.PP_CONFIG.supabaseKey}:null;
-const SYNC_KEYS=["basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
+const SYNC_KEYS=["viewmode","basket","listsrc","hh","fridge","profile","banned","seed","checked","prices","crousOv","journal","outOv","ingOv","training","coachcfg","running","xsport"];
 let sbSession=(()=>{try{return JSON.parse(localStorage.getItem("pp_sbsession")||"null")}catch(e){return null}})();
 let sbState={busy:false,err:null,last:(()=>{try{return +localStorage.getItem("pp_sblast")||0}catch(e){return 0}})()};
 let sbTimer=null,sbPushing=false;
@@ -4034,6 +4038,123 @@ document.addEventListener("click",e=>{
   const y=document.querySelector(".sheet")?.scrollTop;renderCe();const sh=document.querySelector(".sheet");if(sh&&y!=null)sh.scrollTop=y;
 });
 
+/* ===================== Plate photo tracking =====================
+   A photo (or a short description) of a meal is read by the vision model, which lists the foods and
+   their served weight. When a food matches an app ingredient, its nutrients come from the app table
+   (raw values divided by the cooking yield when the food is cooked); otherwise the model's per-100 g
+   values are used, with energy re-derived from Atwater factors (4/4/9) if they disagree. */
+let viewMode=store.get("viewmode","plan");
+let plate=null;
+let thumbs=store.get("thumbs",{});
+const SLOTS_N={matin:"Petit-déjeuner",midi:"Déjeuner",gouter:"Collation",soir:"Dîner"};
+const slotNow=()=>{const h=new Date().getHours();return h<10?"matin":h<15?"midi":h<18?"gouter":"soir"};
+const dayIso=i=>isoDay(dateOf(i));
+const dayMeals=d=>jGet(d).meals||[];
+function itemsNut(items){return items.reduce((a,x)=>{const f=x.g/100;a.k+=x.k*f;a.p+=x.p*f;a.c+=x.c*f;a.f+=x.f*f;return a},{k:0,p:0,c:0,f:0})}
+function dayTotals(d){return dayMeals(d).reduce((a,m)=>{const n=itemsNut(m.items);for(const k in a)a[k]+=n[k];return a},{k:0,p:0,c:0,f:0})}
+function platePrompt(desc){
+  const list=Object.entries(ING).map(([id,x])=>`${id}: ${x.n}`).join("; ");
+  return `${desc?`Voici la description d'un repas par l'utilisateur : "${desc}".`:"Cette photo montre un repas (assiette, bol, plat, sandwich ou en-cas)."} Identifie chaque aliment ${desc?"mentionné":"visible"} et estime sa masse en grammes telle que servie (cuite si l'aliment est cuit). Pour les portions, sers-toi des repères visuels : assiette standard d'environ 26 cm, couverts, main, emballage. Compte aussi les matières grasses visibles ou probables (huile de cuisson, sauce, beurre, fromage râpé).
+Pour chaque aliment, donne : "nom" (court, en français), "grammes" (nombre), "cuit" (true ou false), "ingredient" (la clé de cette liste si l'aliment y correspond, sinon null), et ses valeurs pour 100 g tel que servi d'après la table Ciqual : "kcal", "proteines", "glucides", "lipides".
+Liste : ${list}.
+Réponds uniquement en JSON : {"plat":"nom court du repas","aliments":[...],"confiance":"faible" ou "moyenne" ou "bonne","remarque":"une phrase courte sur ce qui est incertain"}. Si ce n'est pas de la nourriture, renvoie {"aliments":[]}.`;
+}
+function normItem(a){
+  const g=Math.max(0,Math.min(2000,Math.round(+a.grammes||0))),x=ING[a.ingredient];
+  let k=+a.kcal||0,p=+a.proteines||0,c=+a.glucides||0,f=+a.lipides||0;
+  if(x){const y=a.cuit&&x.y?x.y:1;k=x.kcal/y;p=x.p/y;c=x.carb/y;f=x.fat/y}
+  else{p=Math.min(90,Math.max(0,p));c=Math.min(100,Math.max(0,c));f=Math.min(100,Math.max(0,f));const at=4*p+4*c+9*f;if(!(k>0)||Math.abs(k-at)>.25*Math.max(k,at))k=at}
+  return{n:String(a.nom||(x&&x.n)||"Aliment").slice(0,40),g,k,p,c,f,ing:x?a.ingredient:null};
+}
+function ingItem(id,g){const x=ING[id];return{n:x.n,g,k:x.kcal,p:x.p,c:x.carb,f:x.fat,ing:id}}
+async function makeThumb(file){try{const bmp=await createImageBitmap(file),k=120/Math.max(bmp.width,bmp.height),c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.6)}catch(e){return null}}
+function saveThumb(id,url){if(!url)return;thumbs[id]=url;const ks=Object.keys(thumbs);if(ks.length>80)ks.slice(0,ks.length-80).forEach(k=>delete thumbs[k]);store.set("thumbs",thumbs)}
+async function analyzePlate(file,desc){
+  plate={state:"busy",d:dayIso(day),slot:slotNow(),res:null,err:null,idx:null,thumb:null};openSheet(null,plateHtml(),"Mon assiette");
+  try{if(file)plate.thumb=await makeThumb(file);
+    const out=await visionJSON(platePrompt(desc),file);
+    const items=(out&&out.aliments||[]).map(normItem).filter(x=>x.g>0);
+    if(!items.length)plate.err=file?"Je ne vois pas d'aliment sur cette photo. Reprends-la de plus haut, bien éclairée, avec toute l'assiette.":"Je n'ai pas compris ce repas. Précise les aliments et, si tu peux, les quantités.";
+    plate.res={n:String(out&&out.plat||desc||"Repas").slice(0,50),items,conf:out&&out.confiance||"moyenne",note:out&&out.remarque||""};
+  }catch(e){plate.err=e&&e.code==="na"?"L'analyse automatique n'est pas disponible : ajoute une clé Gemini gratuite dans Coach, Réglages.":(e.message||"Analyse impossible.")}
+  plate.state="idle";rerenderPlate();
+}
+function rerenderPlate(){const b=document.querySelector(".sheet .body");if(b){const sc=document.querySelector(".sheet").scrollTop;b.innerHTML=plateHtml();document.querySelector(".sheet").scrollTop=sc}}
+function plateHtml(){
+  const P=plate;
+  if(P.state==="busy")return `<h2>Analyse de ton assiette</h2>${P.thumb?`<img class="plthumb big" src="${P.thumb}" alt="">`:""}<p class="muted">Quelques secondes : j'identifie les aliments et j'estime les portions.</p><div class="bar"><i class="sun busybar" style="width:60%"></i></div>`;
+  if(P.err&&!(P.res&&P.res.items.length))return `<h2>Mon assiette</h2><div class="alert"><span>${esc(P.err)}</span></div><button class="btn block" data-close>Fermer</button>`;
+  const R=P.res,t=itemsNut(R.items);
+  return `<h2>${P.idx!=null?"Modifier le repas":"Ton assiette"}</h2>
+    ${P.thumb?`<img class="plthumb big" src="${P.thumb}" alt="Photo du repas">`:""}
+    <label class="f">Nom du repas<input id="pl-n" value="${esc(R.n)}" maxlength="50"></label>
+    <div class="chips wrap" role="group" aria-label="Moment">${Object.entries(SLOTS_N).map(([k,l])=>`<button class="chip" data-plslot="${k}" aria-pressed="${P.slot===k}">${l}</button>`).join("")}</div>
+    <div class="card pltot"><div><b>${n0(t.p)} g</b><span>protéines</span></div><div><b>${n0(t.k)}</b><span>kcal</span></div><div><b>${n0(t.c)} g</b><span>glucides</span></div><div><b>${n0(t.f)} g</b><span>lipides</span></div></div>
+    <div class="box"><h3>Aliments</h3><p class="note">Corrige les grammes si tu les connais : c'est la portion qui fait l'essentiel de l'erreur.</p>
+    ${R.items.map((x,i)=>`<div class="plitem"><span><b>${esc(x.n)}</b><small>${n0(x.p*x.g/100)} g prot. · ${n0(x.k*x.g/100)} kcal${x.ing?"":" · valeurs estimées"}</small></span>
+      <span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm ghost" data-plg="${i}|-10" aria-label="10 g de moins">−</button><input class="plg" type="number" min="0" max="2000" inputmode="numeric" data-plgi="${i}" value="${x.g}" aria-label="Grammes de ${esc(x.n)}"><span class="muted">g</span><button class="btn sm ghost" data-plg="${i}|10" aria-label="10 g de plus">+</button><button class="btn sm ghost" data-plrm="${i}" aria-label="Retirer ${esc(x.n)}">✕</button></span></div>`).join("")}
+    <div class="row" style="gap:6px"><select id="pl-add" aria-label="Ajouter un aliment"><option value="">Ajouter un aliment…</option>${Object.entries(ING).sort((a,b)=>a[1].n.localeCompare(b[1].n)).map(([id,x])=>`<option value="${id}">${esc(x.n)}</option>`).join("")}</select><input id="pl-addg" type="number" min="1" inputmode="numeric" placeholder="g" style="width:72px"><button class="btn sm" data-pladd>Ajouter</button></div></div>
+    <p class="note">${R.conf==="faible"?"<b>Estimation peu sûre.</b> ":""}${esc(R.note||"")} Une estimation par photo se trompe souvent de 20 % ou plus sur les portions, surtout pour les sauces et les huiles. Peser une fois tes aliments habituels rend le suivi bien plus juste.</p>
+    <button class="btn primary block" data-plsave>Enregistrer le repas</button>
+    ${P.idx!=null?`<button class="btn ghost block" data-pldel>Supprimer ce repas</button>`:""}`;
+}
+function openPlateText(){
+  openSheet(null,`<h2>Décrire un repas</h2><p class="muted">Sans photo, par exemple : "200 g de pâtes, 150 g de poulet, une cuillère d'huile, un yaourt".</p>
+    <label class="f">Ton repas<textarea id="pl-desc" rows="4" maxlength="400"></textarea></label><button class="btn primary block" data-pldesc>Estimer</button>`,"Décrire un repas");
+}
+function photoDayHtml(){
+  const T=targets(profile),d=dayIso(day),M=dayMeals(d),t=dayTotals(d),isToday=day===todayIdx;
+  const cmin=T.kcal*.40/4,cmax=T.kcal*.55/4,fmin=T.kcal*.35/9,fmax=T.kcal*.40/9;
+  const wk=DAYS.map((_,i)=>dayIso(i)).filter(x=>dayMeals(x).length),avgP=wk.length?wk.reduce((a,x)=>a+dayTotals(x).p,0)/wk.length:0;
+  const bar=(lbl,v,goal,unit,cls)=>`<div><div class="row" style="justify-content:space-between"><span class="k">${lbl}</span><span class="v">${n0(v)} / ${n0(goal)} ${unit}</span></div><div class="bar"><i class="${cls||""}" style="width:${Math.min(100,v/goal*100)}%"></i></div></div>`;
+  const canV=visionReady();
+  return `<div class="card"><div class="mini" style="gap:12px">
+      ${bar("Protéines",t.p,T.prot,"g",t.p>=T.prot*.93?"":"sun")}
+      ${bar("Énergie",t.k,T.kcal,"kcal","sun")}
+      <div class="row" style="justify-content:space-between"><span class="k">Glucides</span><span class="v">${n0(t.c)} g <small class="muted">(repère ${n0(cmin)} à ${n0(cmax)} g)</small></span></div>
+      <div class="row" style="justify-content:space-between"><span class="k">Lipides</span><span class="v">${n0(t.f)} g <small class="muted">(repère ${n0(fmin)} à ${n0(fmax)} g)</small></span></div></div>
+      ${wk.length>1?`<p class="note">Moyenne de la semaine : ${n0(avgP)} g de protéines par jour suivi (${wk.length} jours).</p>`:""}
+      ${isToday&&M.length&&t.p<T.prot?`<p class="note">Il te reste environ <b>${n0(T.prot-t.p)} g de protéines</b> et ${n0(Math.max(0,T.kcal-t.k))} kcal pour aujourd'hui.</p>`:""}</div>
+    ${canV?`<label class="btn primary block filebtn">Photographier mon assiette<input type="file" accept="image/*" capture="environment" id="pl-file"></label>
+      <label class="btn block filebtn">Choisir une photo<input type="file" accept="image/*" id="pl-file2"></label>
+      <button class="btn block" data-pltext>Décrire un repas sans photo</button>`
+      :`<div class="welcome"><p>Pour analyser tes photos, ajoute une clé Gemini gratuite dans le Coach (Réglages). En attendant, tu peux ajouter tes aliments à la main.</p><button class="btn" data-plmanual>Ajouter un repas à la main</button></div>`}
+    <h2 class="sect">Repas ${isToday?"du jour":"du "+DAYS[day]}</h2>
+    ${M.length?M.map((m,i)=>{const n=itemsNut(m.items);return `<button class="card plmeal" data-pledit="${i}">${thumbs[m.id]?`<img class="plthumb" src="${thumbs[m.id]}" alt="">`:`<span class="tile">${icon("veg")}</span>`}
+      <span><span class="k muted">${SLOTS_N[m.slot]||"Repas"}</span><b style="display:block">${esc(m.n)}</b><span class="facts"><span class="fact p">${n0(n.p)} g prot.</span><span class="fact">${n0(n.k)} kcal</span><span class="fact">${n0(n.c)} g gluc.</span><span class="fact">${n0(n.f)} g lip.</span></span></span></button>`}).join("")
+      :`<p class="muted">Aucun repas noté ${isToday?"aujourd'hui":"ce jour-là"}.</p>`}
+    <p class="note">Objectifs calculés depuis ton profil : ${T.prot} g de protéines (${n1(T.gkg)} g/kg) et ${n0(T.kcal)} kcal. Glucides et lipides : repères ANSES (40 à 55 % et 35 à 40 % de l'énergie).</p>`;
+}
+const modeSw=()=>`<div class="seg2" role="group" aria-label="Affichage"><button class="chip" data-vmode="photo" aria-pressed="${viewMode==="photo"}">Suivi photo</button><button class="chip" data-vmode="plan" aria-pressed="${viewMode!=="photo"}">Plan proposé</button></div>`;
+function renderPhotoDay(v){
+  v.innerHTML=`<div class="hello"><p class="eyebrow">${dateOf(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${day===todayIdx?"Ta journée":cap1(DAYS[day])}</h1></div>
+   ${modeSw()}
+   <div class="days" role="tablist" aria-label="Jour">${DAYS.map((d,i)=>`<button role="tab" data-day="${i}" aria-selected="${i===day}" aria-label="${d} ${dateOf(i).getDate()}"><span>${d.slice(0,3)}</span><b>${dateOf(i).getDate()}</b><span class="dots"><i class="${dayMeals(dayIso(i)).length?"s":""}"></i></span></button>`).join("")}</div>
+   ${photoDayHtml()}
+   ${daySportHtml(day,weekSport(),running&&hasSport("run")?runWeek():null)}`;
+}
+document.addEventListener("change",e=>{const t=e.target;
+  if((t.id==="pl-file"||t.id==="pl-file2")&&t.files&&t.files[0]){const f=t.files[0];t.value="";analyzePlate(f,null)}
+  else if(t.dataset.plgi!=null&&plate&&plate.res){plate.res.items[+t.dataset.plgi].g=Math.max(0,Math.round(+t.value||0));rerenderPlate()}
+  else if(t.id==="pl-n"&&plate&&plate.res)plate.res.n=t.value;});
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
+  if(d.vmode){viewMode=d.vmode;store.set("viewmode",viewMode);renderPlan();window.scrollTo(0,0);return}
+  if("pltext" in d){openPlateText();return}
+  if("pldesc" in d){const s=document.getElementById("pl-desc").value.trim();if(!s){toast("Décris ton repas.");return}analyzePlate(null,s);return}
+  if("plmanual" in d){plate={state:"idle",d:dayIso(day),slot:slotNow(),res:{n:"Repas",items:[],conf:"bonne",note:""},err:null,idx:null,thumb:null};openSheet(null,plateHtml(),"Mon assiette");return}
+  if(d.pledit!=null){const m=dayMeals(dayIso(day))[+d.pledit];plate={state:"idle",d:dayIso(day),slot:m.slot,res:{n:m.n,items:JSON.parse(JSON.stringify(m.items)),conf:m.conf,note:""},err:null,idx:+d.pledit,thumb:thumbs[m.id]||null,id:m.id};openSheet(null,plateHtml(),"Mon assiette");return}
+  if(!plate||!plate.res)return;const R=plate.res;
+  if(d.plslot){plate.slot=d.plslot;rerenderPlate()}
+  else if(d.plg){const[i,dl]=d.plg.split("|").map(Number);R.items[i].g=Math.max(0,R.items[i].g+dl);rerenderPlate()}
+  else if(d.plrm!=null){R.items.splice(+d.plrm,1);rerenderPlate()}
+  else if("pladd" in d){const id=document.getElementById("pl-add").value,g=+document.getElementById("pl-addg").value;if(!id||!(g>0)){toast("Choisis un aliment et sa quantité.");return}R.items.push(ingItem(id,g));rerenderPlate()}
+  else if("plsave" in d){const nm=document.getElementById("pl-n");if(nm)R.n=nm.value.trim()||"Repas";const items=R.items.filter(x=>x.g>0);if(!items.length){toast("Ajoute au moins un aliment.");return}
+    const M=dayMeals(plate.d).slice(),id=plate.id||("m"+Date.now().toString(36)),m={id,slot:plate.slot,n:R.n,items:items.map(x=>({...x,k:+x.k.toFixed(1),p:+x.p.toFixed(1),c:+x.c.toFixed(1),f:+x.f.toFixed(1)})),conf:R.conf};
+    if(plate.idx!=null)M[plate.idx]=m;else M.push(m);M.sort((a,b)=>Object.keys(SLOTS_N).indexOf(a.slot)-Object.keys(SLOTS_N).indexOf(b.slot));
+    jSet(plate.d,{meals:M});if(plate.thumb)saveThumb(id,plate.thumb);const n=itemsNut(m.items);plate=null;closeSheet();renderPlan();toast(`Repas noté : ${n0(n.p)} g de protéines, ${n0(n.k)} kcal.`)}
+  else if("pldel" in d){if(t.dataset.armed){const M=dayMeals(plate.d).slice();M.splice(plate.idx,1);jSet(plate.d,{meals:M});plate=null;closeSheet();renderPlan()}else{t.dataset.armed="1";t.textContent="Appuie encore pour supprimer"}}
+});
+
 /* ===================== Onboarding (first launch) ===================== */
 let onboardQueue=[],onboardActive=false;
 function sportQueue(){const q=[];if(hasSport("street")&&!training)q.push("street");if(hasSport("run")&&!running)q.push("run");Object.keys(XS).forEach(k=>{if(hasSport(k)&&!xs[k])q.push(k)});return q}
@@ -4119,12 +4240,13 @@ async function shrinkImage(file,max=1600){
     return await new Promise(r=>c.toBlob(b=>r(b||file),"image/jpeg",.85))}catch(e){return file}
 }
 async function visionJSON(prompt,file){
-  const img=await shrinkImage(file);
+  const img=file?await shrinkImage(file):null;
   if(inClaude()){const sample=await window.claude.use("sample");const caps=sample?await sample.limits().catch(()=>null):null;
+    if(sample&&!img)return sample.json(prompt,{modelTier:"default"});
     if(sample&&caps&&caps.images)return sample.json(prompt,{images:[img],modelTier:"default"})}
   if(!geminiReady())throw{code:"na"};
-  const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=rej;fr.readAsDataURL(img)});
-  const body=JSON.stringify({contents:[{role:"user",parts:[{text:prompt},{inline_data:{mime_type:img.type||"image/jpeg",data:b64}}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:6000}});
+  const b64=img?await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=rej;fr.readAsDataURL(img)}):null;
+  const body=JSON.stringify({contents:[{role:"user",parts:[{text:prompt},...(img?[{inline_data:{mime_type:img.type||"image/jpeg",data:b64}}]:[])]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:6000}});
   let models=[coachCfg.model||PROVIDERS.gemini.model],lastErr="";
   for(let k=0;k<4&&models[k];k++){
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[k])}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body});
