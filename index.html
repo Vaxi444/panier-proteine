@@ -3114,7 +3114,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-12-2";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-16-1";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -4060,30 +4060,34 @@ Liste : ${list}.
 Réponds uniquement en JSON : {"plat":"nom court du repas","aliments":[...],"confiance":"faible" ou "moyenne" ou "bonne","remarque":"une phrase courte sur ce qui est incertain"}. Si ce n'est pas de la nourriture, renvoie {"aliments":[]}.`;
 }
 function normItem(a){
-  const g=Math.max(0,Math.min(2000,Math.round(+a.grammes||0))),x=ING[a.ingredient];
+  const num=v=>{const n=parseFloat(String(v??"").replace(",","."));return isFinite(n)?n:0};
+  a={...a,grammes:num(a.grammes??a.g??a.poids),kcal:num(a.kcal),proteines:num(a.proteines??a.prot),glucides:num(a.glucides),lipides:num(a.lipides),cuit:a.cuit===true||a.cuit==="true"};
+  const g=Math.max(0,Math.min(2000,Math.round(a.grammes))),x=ING[a.ingredient];
   let k=+a.kcal||0,p=+a.proteines||0,c=+a.glucides||0,f=+a.lipides||0;
   if(x){const y=a.cuit&&x.y?x.y:1;k=x.kcal/y;p=x.p/y;c=x.carb/y;f=x.fat/y}
   else{p=Math.min(90,Math.max(0,p));c=Math.min(100,Math.max(0,c));f=Math.min(100,Math.max(0,f));const at=4*p+4*c+9*f;if(!(k>0)||Math.abs(k-at)>.25*Math.max(k,at))k=at}
   return{n:String(a.nom||(x&&x.n)||"Aliment").slice(0,40),g,k,p,c,f,ing:x?a.ingredient:null};
 }
 function ingItem(id,g){const x=ING[id];return{n:x.n,g,k:x.kcal,p:x.p,c:x.carb,f:x.fat,ing:id}}
-async function makeThumb(file){try{const bmp=await createImageBitmap(file),k=120/Math.max(bmp.width,bmp.height),c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.6)}catch(e){return null}}
 function saveThumb(id,url){if(!url)return;thumbs[id]=url;const ks=Object.keys(thumbs);if(ks.length>80)ks.slice(0,ks.length-80).forEach(k=>delete thumbs[k]);store.set("thumbs",thumbs)}
 async function analyzePlate(file,desc){
   plate={state:"busy",d:dayIso(day),slot:slotNow(),res:null,err:null,idx:null,thumb:null};openSheet(null,plateHtml(),"Mon assiette");
-  try{if(file)plate.thumb=await makeThumb(file);
-    const out=await visionJSON(platePrompt(desc),file);
-    const items=(out&&out.aliments||[]).map(normItem).filter(x=>x.g>0);
+  try{let blob=null;if(file){const im=await prepImage(file,1280);blob=im.blob;plate.thumb=im.thumb}
+    let out=await visionJSON(platePrompt(desc),blob,true);
+    if(Array.isArray(out))out={aliments:out};
+    const list=out&&(out.aliments||out.foods||out.items||out.ingredients)||[];
+    const items=(Array.isArray(list)?list:[]).filter(a=>a&&typeof a==="object").map(normItem).filter(x=>x.g>0);
     if(!items.length)plate.err=file?"Je ne vois pas d'aliment sur cette photo. Reprends-la de plus haut, bien éclairée, avec toute l'assiette.":"Je n'ai pas compris ce repas. Précise les aliments et, si tu peux, les quantités.";
     plate.res={n:String(out&&out.plat||desc||"Repas").slice(0,50),items,conf:out&&out.confiance||"moyenne",note:out&&out.remarque||""};
-  }catch(e){plate.err=e&&e.code==="na"?"L'analyse automatique n'est pas disponible : ajoute une clé Gemini gratuite dans Coach, Réglages.":(e.message||"Analyse impossible.")}
+  }catch(e){console.error(e);plate.err=e&&e.code==="na"?"L'analyse automatique n'est pas disponible : ajoute une clé Gemini gratuite dans Coach, Réglages.":"Analyse impossible. "+(e&&e.message?e.message:String(e))}
   plate.state="idle";rerenderPlate();
 }
 function rerenderPlate(){const b=document.querySelector(".sheet .body");if(b){const sc=document.querySelector(".sheet").scrollTop;b.innerHTML=plateHtml();document.querySelector(".sheet").scrollTop=sc}}
 function plateHtml(){
   const P=plate;
   if(P.state==="busy")return `<h2>Analyse de ton assiette</h2>${P.thumb?`<img class="plthumb big" src="${P.thumb}" alt="">`:""}<p class="muted">Quelques secondes : j'identifie les aliments et j'estime les portions.</p><div class="bar"><i class="sun busybar" style="width:60%"></i></div>`;
-  if(P.err&&!(P.res&&P.res.items.length))return `<h2>Mon assiette</h2><div class="alert"><span>${esc(P.err)}</span></div><button class="btn block" data-close>Fermer</button>`;
+  if(P.err&&!(P.res&&P.res.items.length))return `<h2>Mon assiette</h2>${P.thumb?`<img class="plthumb big" src="${P.thumb}" alt="">`:""}<div class="alert"><span>${esc(P.err)}</span></div>
+    <button class="btn primary block" data-plmanual>Saisir ce repas à la main</button><button class="btn block" data-pltext>Le décrire en texte</button><button class="btn ghost block" data-close>Fermer</button>`;
   const R=P.res,t=itemsNut(R.items);
   return `<h2>${P.idx!=null?"Modifier le repas":"Ton assiette"}</h2>
     ${P.thumb?`<img class="plthumb big" src="${P.thumb}" alt="Photo du repas">`:""}
@@ -4233,31 +4237,66 @@ document.addEventListener("submit",async e=>{
 });
 /* ===================== Image reading (Claude in the artifact, Gemini key on the phone) ===================== */
 const geminiReady=()=>coachCfg.provider==="gemini"&&!!coachCfg.key;
-const visionReady=()=>inClaude()||geminiReady();
-async function shrinkImage(file,max=1600){
-  try{const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
-    const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
-    return await new Promise(r=>c.toBlob(b=>r(b||file),"image/jpeg",.85))}catch(e){return file}
+const visionReady=()=>inClaude()||geminiReady()||(coachCfg.provider==="anthropic"&&!!coachCfg.key);
+/* Decode a photo once, at a moderate size: phone photos (12 MP and more) decoded at full size
+   can exhaust the browser's memory and reload the page. Returns a JPEG blob and a small thumbnail. */
+async function decodeImage(file,max){
+  try{const b=await createImageBitmap(file,{resizeWidth:max,resizeQuality:"medium"});if(b.width&&b.height)return b}catch(e){}
+  try{const url=URL.createObjectURL(file),img=new Image();img.src=url;await img.decode();setTimeout(()=>URL.revokeObjectURL(url),1000);return img}catch(e){}
+  return null;
 }
-async function visionJSON(prompt,file){
-  const img=file?await shrinkImage(file):null;
+async function prepImage(file,max=1280){
+  const src=await decodeImage(file,max);
+  if(!src){if(file.size<=8e6)return{blob:file,thumb:null};throw new Error("Format de photo illisible. Réessaie en JPEG, ou avec une capture d'écran de la photo.")}
+  const w0=src.width,h0=src.height,k=Math.min(1,max/Math.max(w0,h0)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(w0*k));c.height=Math.max(1,Math.round(h0*k));c.getContext("2d").drawImage(src,0,0,c.width,c.height);
+  if(src.close)src.close();
+  const blob=await new Promise(r=>c.toBlob(b=>r(b),"image/jpeg",.82))||file;
+  const t=document.createElement("canvas"),kt=120/Math.max(c.width,c.height);t.width=Math.round(c.width*kt);t.height=Math.round(c.height*kt);t.getContext("2d").drawImage(c,0,0,t.width,t.height);
+  return{blob,thumb:t.toDataURL("image/jpeg",.6)};
+}
+async function shrinkImage(file,max=1600){try{return(await prepImage(file,max)).blob}catch(e){return file}}
+/* Model answers sometimes come wrapped in prose or code fences: keep the outermost JSON value. */
+function parseLooseJSON(t){
+  t=String(t||"").replace(/```(json)?/g,"").trim();
+  try{return JSON.parse(t)}catch(e){}
+  const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
+  const c=t.indexOf("["),d=t.lastIndexOf("]");if(c>=0&&d>c){try{return JSON.parse(t.slice(c,d+1))}catch(e){}}
+  throw new Error("Réponse de l'IA illisible (JSON incomplet). Réessaie.");
+}
+const blobB64=blob=>new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=()=>rej(new Error("Lecture de la photo impossible."));fr.readAsDataURL(blob)});
+async function fetchT(url,opt,ms=90000){const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),ms);
+  try{return await fetch(url,{...opt,signal:ctl.signal})}catch(e){throw new Error(ctl.signal.aborted?"Pas de réponse au bout de 90 s. Réessaie, ou vérifie ta connexion.":"Réseau indisponible.")}finally{clearTimeout(to)}}
+async function visionJSON(prompt,file,prepped){
+  const img=file?(prepped?file:await shrinkImage(file,1280)):null;
   if(inClaude()){const sample=await window.claude.use("sample");const caps=sample?await sample.limits().catch(()=>null):null;
     if(sample&&!img)return sample.json(prompt,{modelTier:"default"});
     if(sample&&caps&&caps.images)return sample.json(prompt,{images:[img],modelTier:"default"})}
+  const b64=img?await blobB64(img):null,mime=img&&img.type&&/^image\/(jpeg|png|webp|heic|heif|gif)$/.test(img.type)?img.type:"image/jpeg";
+  if(coachCfg.provider==="anthropic"&&coachCfg.key){
+    const r=await fetchT("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":coachCfg.key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:coachCfg.model||PROVIDERS.anthropic.model,max_tokens:4000,messages:[{role:"user",content:[...(img?[{type:"image",source:{type:"base64",media_type:mime==="image/heic"||mime==="image/heif"?"image/jpeg":mime,data:b64}}]:[]),{type:"text",text:prompt+"\nRéponds uniquement avec le JSON, sans texte autour."}]}]})});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d?.error?.message||("Erreur "+r.status));
+    return parseLooseJSON((d.content||[]).filter(x=>x.type==="text").map(x=>x.text).join(""));
+  }
   if(!geminiReady())throw{code:"na"};
-  const b64=img?await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=rej;fr.readAsDataURL(img)}):null;
-  const body=JSON.stringify({contents:[{role:"user",parts:[{text:prompt},...(img?[{inline_data:{mime_type:img.type||"image/jpeg",data:b64}}]:[])]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:6000}});
-  let models=[coachCfg.model||PROVIDERS.gemini.model],lastErr="";
-  for(let k=0;k<4&&models[k];k++){
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[k])}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body});
+  const parts=[{text:prompt},...(img?[{inline_data:{mime_type:mime,data:b64}}]:[])];
+  let models=[coachCfg.model||PROVIDERS.gemini.model],lastErr="",think=true;
+  for(let k=0;k<5&&models[k];k++){
+    const model=models[k],gc={responseMimeType:"application/json",maxOutputTokens:8192};
+    if(think)gc.thinkingConfig=/gemini-2\.5/.test(model)?{thinkingBudget:0}:{thinkingLevel:"low"};
+    const r=await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(coachCfg.key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts}],generationConfig:gc})});
     const d=await r.json().catch(()=>({})),e0=Array.isArray(d)?d[0]:d;
-    if(r.ok){const t=(d.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("").replace(/^\s*```(json)?|```\s*$/g,"");return JSON.parse(t)}
-    lastErr=e0?.error?.message||("Erreur "+r.status);if(/API key/i.test(lastErr))throw new Error("Clé Gemini refusée : vérifie-la dans Coach → Réglages.");
+    if(r.ok){const c=d.candidates?.[0];const t=(c?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+      if(!t)throw new Error(c?.finishReason==="SAFETY"?"Photo refusée par le filtre de Google. Essaie une autre photo.":"Réponse vide de Gemini. Réessaie.");
+      return parseLooseJSON(t)}
+    lastErr=e0?.error?.message||("Erreur "+r.status);if(/API key/i.test(lastErr))throw new Error("Clé Gemini refusée : vérifie-la dans Coach, Réglages.");
+    if(think&&/thinking/i.test(lastErr)){think=false;models.splice(k+1,0,model);continue}
     if(k===0){const sug=(lastErr.match(/models\/(gemini-[\w.\-]+)/)||[])[1];let alts=[];try{alts=await geminiModels()}catch(e){}
       models=[models[0],...new Set([sug,...alts].filter(x=>x&&x!==models[0]))];if(sug&&/no longer|update your code/i.test(lastErr)){coachCfg.model=sug;saveCoachCfg()}}
     await new Promise(z=>setTimeout(z,800));
   }
-  throw new Error(/high demand|overloaded/i.test(lastErr)?"Gemini est saturé en ce moment, réessaie dans quelques minutes.":lastErr);
+  throw new Error(/high demand|overloaded/i.test(lastErr)?"Gemini est saturé en ce moment, réessaie dans quelques minutes.":lastErr||"Analyse impossible.");
 }
 
 /* ===================== Receipt scanning: a photo of the till receipt updates store prices ===================== */
