@@ -3114,7 +3114,7 @@ async function geminiModels(){
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/",""))
     .filter(n=>/flash|gemma/.test(n)&&!/image|tts|live|audio|embedding/.test(n)).sort((a,b)=>(/lite|gemma|preview|exp/.test(a)-/lite|gemma|preview|exp/.test(b))||v(b)-v(a));
 }
-let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-16-1";
+let coachOnBusy=null,coachOnText=null,coachAbort=null,coachStart=0,coachTick=null;const APP_VERSION="2026-11-23-4";
 /* Streamed answer with light reasoning: text shows up as it is written. */
 async function askGemini(msgs,retried,think=true,stream=true,modelOv=null,tried=[]){
   const model=modelOv||coachCfg.model||PROVIDERS.gemini.model,gc={maxOutputTokens:900};
@@ -3334,7 +3334,7 @@ function accountHtml(){
       <label class="f">Mot de passe<input id="sb-pass" type="password" autocomplete="current-password" minlength="6" required></label>
       ${sbState.err?`<p class="note" style="color:var(--warn)"><b>${esc(sbState.err)}</b></p>`:""}
       <div class="row"><button class="btn primary" type="submit" data-mode="in" ${sbState.busy?"disabled":""}>Se connecter</button><button class="btn" type="submit" data-mode="up" ${sbState.busy?"disabled":""}>Créer un compte</button></div>
-    </form></div>`;
+    </form><button class="btn sm ghost" data-forgot="sb-email">Mot de passe oublié ?</button></div>`;
 }
 function renderAccount(){const host=document.getElementById("acctHost");if(host)host.innerHTML=accountHtml()}
 document.addEventListener("submit",async e=>{
@@ -4202,7 +4202,8 @@ function renderWelcome(mode){
       ${wlState.err?`<p class="note" style="color:var(--warn)"><b>${esc(wlState.err)}</b></p>`:""}
       <button class="btn primary block" type="submit" ${wlState.busy?"disabled":""}>${wlState.busy?"Un instant…":btn}</button></form>`;
   if(mode==="login")v.innerHTML=`<div class="wl"><button class="btn sm ghost wlback" data-wl="home">← Retour</button>
-     <h1>Content de te revoir</h1><p class="muted">Connecte-toi pour retrouver ton profil, tes séances et ta progression.</p>${form("wlLogin","Se connecter","current-password")}</div>`;
+     <h1>Content de te revoir</h1><p class="muted">Connecte-toi pour retrouver ton profil, tes séances et ta progression.</p>${form("wlLogin","Se connecter","current-password")}
+     <button class="btn ghost block" data-forgot="wlLogin-email">Mot de passe oublié ?</button></div>`;
   else if(mode==="save")v.innerHTML=`<div class="wl"><div class="wllogo">${LOGO_BIG}</div>
      <h1>Sauvegarde ta progression</h1><p class="muted">Crée un compte gratuit : tes repas, tes séances et ton arbre sont enregistrés en ligne et tu les retrouves sur n'importe quel téléphone.</p>
      ${form("wlSignup","Créer mon compte","new-password")}
@@ -4235,6 +4236,33 @@ document.addEventListener("submit",async e=>{
     if(!restored){toast("Connecté. Ton compte est vide : configure ton profil.");wiz=0;show("profil");applyWizard()}
   }catch(err){wlState.busy=false;wlState.err=err.message||"Connexion impossible.";renderWelcome(wlState.mode)}
 });
+/* ===================== Mot de passe oublié (Supabase) =====================
+   1) "Mot de passe oublié" envoie un lien par email (endpoint recover).
+   2) Le lien revient sur l'appli avec #access_token=...&type=recovery : on demande le nouveau mot de passe. */
+async function sbForgot(email){
+  if(!SB)return;if(!/^\S+@\S+\.\S+$/.test(email||"")){toast("Écris d'abord ton email dans le champ Email.");return}
+  try{const r=await fetch(SB.url+"/auth/v1/recover?redirect_to="+encodeURIComponent(location.origin+location.pathname),{method:"POST",headers:{apikey:SB.key,"content-type":"application/json"},body:JSON.stringify({email})});
+    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.msg||d.message||d.error_description||("Erreur "+r.status))}
+    openSheet(null,`<h2>Regarde tes emails</h2><p>Si un compte existe pour <b>${esc(email)}</b>, un lien pour choisir un nouveau mot de passe vient d'être envoyé. Pense à vérifier les spams.</p><p class="note">Ouvre le lien sur ce téléphone, dans le même navigateur que l'appli.</p><button class="btn primary block" data-close>OK</button>`,"Mot de passe oublié")}
+  catch(e){toast(/rate|limit|seconds/i.test(e.message)?"Trop de demandes : réessaie dans quelques minutes.":"Envoi impossible : "+e.message)}
+}
+async function sbRecoveryFromLink(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get("error")){history.replaceState(null,"",location.pathname);toast(/expired/i.test(h.get("error_code")||h.get("error_description")||"")?"Lien expiré : redemande un lien depuis la connexion.":"Lien invalide : redemande un lien depuis la connexion.");return}
+  if(h.get("type")!=="recovery"||!h.get("access_token")||!SB)return;
+  const at=h.get("access_token"),rt=h.get("refresh_token"),exp=+h.get("expires_in")||3600;history.replaceState(null,"",location.pathname);
+  openSheet(null,`<h2>Nouveau mot de passe</h2><form id="newPassForm" class="profile" style="gap:10px"><label class="f">Nouveau mot de passe<input id="np-pass" type="password" autocomplete="new-password" minlength="6" required></label>
+    <button class="btn primary block" type="submit">Enregistrer</button></form>`,"Nouveau mot de passe");
+  document.getElementById("newPassForm").addEventListener("submit",async ev=>{ev.preventDefault();const password=document.getElementById("np-pass").value;
+    try{const r=await fetch(SB.url+"/auth/v1/user",{method:"PUT",headers:{apikey:SB.key,Authorization:"Bearer "+at,"content-type":"application/json"},body:JSON.stringify({password})});
+      const u=await r.json().catch(()=>({}));if(!r.ok)throw new Error(sbErr(u.msg||u.message||u.error_description||("Erreur "+r.status)));
+      sbStore({access_token:at,refresh_token:rt,expires_in:exp,user:u});closeSheet();sbChip();renderAccount();
+      const restored=await sbPull(true).catch(()=>false);toast("Mot de passe changé, tu es connecté.");
+      if(restored&&onboarding()&&typeof finishOnboarding==="function")finishOnboarding()}
+    catch(e){toast(e.message||"Changement impossible.")}});
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-forgot]");if(!b)return;const f=document.getElementById(b.dataset.forgot);sbForgot(f?f.value.trim():"")});
+setTimeout(sbRecoveryFromLink,400);window.addEventListener("hashchange",sbRecoveryFromLink);
 /* ===================== Image reading (Claude in the artifact, Gemini key on the phone) ===================== */
 const geminiReady=()=>coachCfg.provider==="gemini"&&!!coachCfg.key;
 const visionReady=()=>inClaude()||geminiReady()||(coachCfg.provider==="anthropic"&&!!coachCfg.key);
